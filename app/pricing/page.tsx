@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/config'
+import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
 import { Check, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

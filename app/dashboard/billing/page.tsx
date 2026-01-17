@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/lib/context/auth-context'
-import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/config'
+import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
 import { Check, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
