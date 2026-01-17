@@ -1,0 +1,98 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidPlan(plan) {
+      return plan in ['FREE', 'BASIC', 'PRO'];
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile
+      allow create: if isOwner(userId) && 
+        request.resource.data.uid == userId &&
+        request.resource.data.plan == 'FREE';
+      
+      // Users can update their own profile (but not certain fields)
+      allow update: if isOwner(userId) && 
+        // Can't change uid
+        request.resource.data.uid == resource.data.uid &&
+        // Can't change plan directly (only via Cloud Functions/webhooks)
+        request.resource.data.plan == resource.data.plan &&
+        // Can't change Stripe IDs directly
+        request.resource.data.stripeCustomerId == resource.data.stripeCustomerId &&
+        request.resource.data.stripeSubscriptionId == resource.data.stripeSubscriptionId;
+      
+      // No deletion allowed
+      allow delete: if false;
+    }
+    
+    // Recipes collection
+    match /recipes/{recipeId} {
+      // Users can read their own recipes
+      allow read: if isAuthenticated() && 
+        resource.data.uid == request.auth.uid;
+      
+      // Users can create recipes
+      allow create: if isAuthenticated() && 
+        request.resource.data.uid == request.auth.uid;
+      
+      // Users can update their own recipes
+      allow update: if isAuthenticated() && 
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid;
+      
+      // Users can delete their own recipes
+      allow delete: if isAuthenticated() && 
+        resource.data.uid == request.auth.uid;
+    }
+    
+    // Audit events collection
+    match /auditEvents/{eventId} {
+      // Users can read their own audit events
+      allow read: if isAuthenticated() && 
+        resource.data.uid == request.auth.uid;
+      
+      // Users can create their own audit events
+      allow create: if isAuthenticated() && 
+        request.resource.data.uid == request.auth.uid;
+      
+      // No updates or deletes allowed (immutable audit log)
+      allow update: if false;
+      allow delete: if false;
+    }
+    
+    // Food cache collection (for caching USDA results)
+    match /foodCache/{foodId} {
+      // Anyone authenticated can read cached food data
+      allow read: if isAuthenticated();
+      
+      // Only Cloud Functions can write (using admin SDK)
+      allow write: if false;
+    }
+    
+    // Rate limiting collection
+    match /rateLimits/{limitId} {
+      // Only Cloud Functions can read/write
+      allow read, write: if false;
+    }
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

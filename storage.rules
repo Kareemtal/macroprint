@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Exports folder - users can read their own exports
+    match /exports/{userId}/{recipeId}/{fileName} {
+      // Users can read their own exports
+      allow read: if isOwner(userId);
+      
+      // Only Cloud Functions can write (using admin SDK)
+      allow write: if false;
+    }
+    
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
