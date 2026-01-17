@@ -8,8 +8,8 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    serverComponentsExternalPackages: ['stripe', 'undici'],
   },
-  serverExternalPackages: ['stripe', 'undici'],
   webpack: (config, { isServer }) => {
     // Don't parse undici - it uses private class fields that webpack struggles with
     config.module = {

@@ -201,7 +201,7 @@ export default function BillingPage() {
                   <Button className="w-full" variant="outline" disabled>
                     Current Plan
                   </Button>
-                ) : isUpgrade && planKey !== 'FREE' ? (
+                ) : isUpgrade ? (
                   <Button
                     className="w-full"
                     onClick={() => handleCheckout(planKey as 'BASIC' | 'PRO')}
@@ -212,18 +212,22 @@ export default function BillingPage() {
                     ) : null}
                     Upgrade to {plan.name}
                   </Button>
-                ) : planKey === 'FREE' && currentPlan !== 'FREE' ? (
+                ) : planKey === 'FREE' ? (
+                  <Button className="w-full" variant="outline" disabled>
+                    Free
+                  </Button>
+                ) : currentPlan !== 'FREE' ? (
                   <Button
                     className="w-full"
                     variant="outline"
                     onClick={handlePortal}
                     disabled={isLoading === 'portal'}
                   >
-                    Downgrade
+                    Manage Plan
                   </Button>
                 ) : (
                   <Button className="w-full" variant="outline" disabled>
-                    {planKey === 'FREE' ? 'Free' : 'Contact Sales'}
+                    Contact Sales
                   </Button>
                 )}
               </CardFooter>
