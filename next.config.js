@@ -8,16 +8,10 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    serverComponentsExternalPackages: ['stripe', 'undici'],
   },
   webpack: (config, { isServer }) => {
-    // Don't parse undici - it uses private class fields that webpack struggles with
-    config.module = {
-      ...config.module,
-      noParse: /undici/,
-    }
-    
     if (!isServer) {
+      // Client-side: provide fallbacks for Node.js modules
       config.resolve.fallback = {
         ...config.resolve.fallback,
         net: false,
@@ -29,8 +23,6 @@ const nextConfig = {
         https: false,
         zlib: false,
       }
-      // Exclude server-only packages from client bundle
-      config.externals = [...(config.externals || []), 'stripe', 'undici']
     }
     
     return config
