@@ -6,9 +6,9 @@ import { FileText, ArrowRight, Calculator } from 'lucide-react'
 
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://macroprint.com'),
-    title: 'Nutrition Facts vs Macros: What's the Difference?',
-  description:
-    'Understand the difference between nutrition facts and macros. Learn what meal prep businesses need to know about macronutrients vs full nutrition panels.',
+    title: 'Nutrition Facts vs Macros: What\'s the Difference?',
+    description:
+        'Understand the difference between nutrition facts and macros. Learn what meal prep businesses need to know about macronutrients vs full nutrition panels.',
     keywords: [
         'nutrition facts vs macros',
         'macros vs nutrition facts',
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
         'macronutrients vs nutrition facts',
     ],
     openGraph: {
-        title: 'Nutrition Facts vs Macros: What's the Difference?',
-    description: 'Simple guide explaining the difference between nutrition facts and macros for meal prep businesses.',
+        title: 'Nutrition Facts vs Macros: What\'s the Difference?',
+        description: 'Simple guide explaining the difference between nutrition facts and macros for meal prep businesses.',
         url: '/nutrition-facts-vs-macros',
         type: 'article',
     },
