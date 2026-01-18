@@ -42,9 +42,13 @@ service cloud.firestore {
     
     // Recipes collection
     match /recipes/{recipeId} {
-      // Users can read their own recipes
-      allow read: if isAuthenticated() && 
+      // Users can read their own recipes (single document get)
+      allow get: if isAuthenticated() && 
         resource.data.uid == request.auth.uid;
+      
+      // Users can list their own recipes (collection query)
+      // The query must filter by uid matching the authenticated user
+      allow list: if isAuthenticated();
       
       // Users can create recipes
       allow create: if isAuthenticated() && 

@@ -1,7 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
 import { getAuth, Auth } from 'firebase/auth'
 import { getFirestore, Firestore } from 'firebase/firestore'
-import { getStorage, FirebaseStorage } from 'firebase/storage'
+import { getStorage as getFirebaseStorageSDK, FirebaseStorage } from 'firebase/storage'
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,41 +16,41 @@ const firebaseConfig = {
 // Check if Firebase config is valid
 const isConfigValid = firebaseConfig.apiKey && firebaseConfig.projectId
 
-let app: FirebaseApp | null = null
-let auth: Auth | null = null
-let db: Firestore | null = null
-let storage: FirebaseStorage | null = null
+let _app: FirebaseApp | null = null
+let _auth: Auth | null = null
+let _db: Firestore | null = null
+let _storage: FirebaseStorage | null = null
 
 function getFirebaseApp(): FirebaseApp {
   if (!isConfigValid) {
     throw new Error('Firebase configuration is missing. Please set environment variables.')
   }
-  
-  if (!app) {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0]
+
+  if (!_app) {
+    _app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0]
   }
-  return app
+  return _app
 }
 
 function getFirebaseAuth(): Auth {
-  if (!auth) {
-    auth = getAuth(getFirebaseApp())
+  if (!_auth) {
+    _auth = getAuth(getFirebaseApp())
   }
-  return auth
+  return _auth
 }
 
 function getFirebaseDb(): Firestore {
-  if (!db) {
-    db = getFirestore(getFirebaseApp())
+  if (!_db) {
+    _db = getFirestore(getFirebaseApp())
   }
-  return db
+  return _db
 }
 
 function getFirebaseStorage(): FirebaseStorage {
-  if (!storage) {
-    storage = getStorage(getFirebaseApp())
+  if (!_storage) {
+    _storage = getFirebaseStorageSDK(getFirebaseApp())
   }
-  return storage
+  return _storage
 }
 
 // Export getters for lazy initialization

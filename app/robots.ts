@@ -8,7 +8,20 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/dashboard/', '/api/'],
+        disallow: [
+          '/dashboard/',
+          '/api/',
+          '/checkout/',
+          '/account/',
+          '/_next/',
+          '/search?',
+          '/*?q=',
+        ],
+      },
+      // Block AI scrapers (optional - protects proprietary content)
+      {
+        userAgent: ['GPTBot', 'ChatGPT-User', 'CCBot', 'anthropic-ai'],
+        disallow: ['/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
