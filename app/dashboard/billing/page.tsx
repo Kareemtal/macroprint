@@ -9,16 +9,26 @@ import { PLAN_FEATURES, type PlanType } from '@/lib/stripe/plans'
 import { Check, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+import { useToast } from '@/components/ui/use-toast'
+
 export default function BillingPage() {
   const searchParams = useSearchParams()
   const { user, profile, refreshProfile } = useAuth()
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const success = searchParams.get('success')
   const canceled = searchParams.get('canceled')
 
   const handleCheckout = async (plan: 'BASIC' | 'PRO') => {
-    if (!user) return
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to upgrade.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsLoading(plan)
     try {
@@ -34,9 +44,19 @@ export default function BillingPage() {
         window.location.href = data.url
       } else {
         console.error('Checkout error:', data.error)
+        toast({
+          title: "Checkout Failed",
+          description: data.error || "Could not start checkout. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Checkout error:', error)
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please check your connection.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(null)
     }
@@ -59,9 +79,19 @@ export default function BillingPage() {
         window.location.href = data.url
       } else {
         console.error('Portal error:', data.error)
+        toast({
+          title: "Portal Failed",
+          description: data.error || "Could not open billing portal.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Portal error:', error)
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(null)
     }
@@ -245,21 +275,21 @@ export default function BillingPage() {
           <div>
             <h3 className="font-medium">Can I cancel anytime?</h3>
             <p className="text-sm text-muted-foreground">
-              Yes, you can cancel your subscription at any time from the Manage 
+              Yes, you can cancel your subscription at any time from the Manage
               Subscription page. You'll keep access until the end of your billing period.
             </p>
           </div>
           <div>
             <h3 className="font-medium">What happens to my recipes if I downgrade?</h3>
             <p className="text-sm text-muted-foreground">
-              Your recipes are always saved. On the Free plan, you can still view 
+              Your recipes are always saved. On the Free plan, you can still view
               and edit them, but you'll only be able to export 3 recipes and 3 labels per day.
             </p>
           </div>
           <div>
             <h3 className="font-medium">Do you offer refunds?</h3>
             <p className="text-sm text-muted-foreground">
-              We offer a full refund within 7 days of your first subscription payment 
+              We offer a full refund within 7 days of your first subscription payment
               if you're not satisfied with MacroPrint.
             </p>
           </div>
