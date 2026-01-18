@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe/config'
-import { db } from '@/lib/firebase/config'
 import { doc, updateDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore'
 import type { UserPlan } from '@/lib/types'
 import Stripe from 'stripe'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
+async function getFirebaseDb() {
+  const { getDb } = await import('@/lib/firebase/config')
+  return getDb()
+}
+
+async function getStripe() {
+  const { stripe } = await import('@/lib/stripe/config')
+  return stripe
+}
+
 async function updateUserPlan(customerId: string, plan: UserPlan, subscriptionId: string | null) {
+  const db = await getFirebaseDb()
+  
   // Find user by Stripe customer ID
   const usersRef = collection(db, 'users')
   const q = query(usersRef, where('stripeCustomerId', '==', customerId))
@@ -47,6 +57,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No signature' }, { status: 400 })
   }
 
+  const stripe = await getStripe()
   let event: Stripe.Event
 
   try {

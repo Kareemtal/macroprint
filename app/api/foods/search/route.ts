@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { USDAProvider } from '@/lib/nutrition/providers/usda'
-
-const usda = new USDAProvider(process.env.USDA_API_KEY)
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -15,6 +12,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Lazy import to avoid build-time initialization
+    const { USDAProvider } = await import('@/lib/nutrition/providers/usda')
+    const usda = new USDAProvider(process.env.USDA_API_KEY)
+    
     const results = await usda.searchFoods(query, { limit: 20 })
 
     return NextResponse.json({

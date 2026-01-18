@@ -13,35 +13,55 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
-interface FirebaseServices {
-  app: FirebaseApp
-  auth: Auth
-  db: Firestore
-  storage: FirebaseStorage
-}
+// Check if Firebase config is valid
+const isConfigValid = firebaseConfig.apiKey && firebaseConfig.projectId
 
-function initFirebase(): FirebaseServices {
-  const firebaseApp = !getApps().length
-    ? initializeApp(firebaseConfig)
-    : getApps()[0]
+let app: FirebaseApp | null = null
+let auth: Auth | null = null
+let db: Firestore | null = null
+let storage: FirebaseStorage | null = null
 
-  const firebaseAuth = getAuth(firebaseApp)
-  const firebaseDb = getFirestore(firebaseApp)
-  const firebaseStorage = getStorage(firebaseApp)
-
-  return {
-    app: firebaseApp,
-    auth: firebaseAuth,
-    db: firebaseDb,
-    storage: firebaseStorage,
+function getFirebaseApp(): FirebaseApp {
+  if (!isConfigValid) {
+    throw new Error('Firebase configuration is missing. Please set environment variables.')
   }
+  
+  if (!app) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0]
+  }
+  return app
 }
 
-const firebase = initFirebase()
+function getFirebaseAuth(): Auth {
+  if (!auth) {
+    auth = getAuth(getFirebaseApp())
+  }
+  return auth
+}
 
-export const app = firebase.app
-export const auth = firebase.auth
-export const db = firebase.db
-export const storage = firebase.storage
+function getFirebaseDb(): Firestore {
+  if (!db) {
+    db = getFirestore(getFirebaseApp())
+  }
+  return db
+}
 
-export default firebase
+function getFirebaseStorage(): FirebaseStorage {
+  if (!storage) {
+    storage = getStorage(getFirebaseApp())
+  }
+  return storage
+}
+
+// Export getters for lazy initialization
+export {
+  getFirebaseApp as getApp,
+  getFirebaseAuth as getAuth,
+  getFirebaseDb as getDb,
+  getFirebaseStorage as getStorage,
+}
+
+// For backward compatibility - these will throw if called during build without env vars
+export const auth = isConfigValid ? getFirebaseAuth() : (null as unknown as Auth)
+export const db = isConfigValid ? getFirebaseDb() : (null as unknown as Firestore)
+export const storage = isConfigValid ? getFirebaseStorage() : (null as unknown as FirebaseStorage)

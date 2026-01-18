@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe/config'
 import { doc, getDoc } from 'firebase/firestore'
-import { db } from '@/lib/firebase/config'
 import type { UserProfile } from '@/lib/types'
 
 export async function POST(request: NextRequest) {
   try {
+    // Lazy import to avoid build-time initialization
+    const { stripe } = await import('@/lib/stripe/config')
+    const { getDb } = await import('@/lib/firebase/config')
+    const db = getDb()
+
     const { userId } = await request.json()
 
     if (!userId) {

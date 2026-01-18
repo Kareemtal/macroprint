@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { USDAProvider } from '@/lib/nutrition/providers/usda'
-
-const usda = new USDAProvider(process.env.USDA_API_KEY)
 
 export async function GET(
   request: NextRequest,
@@ -17,6 +14,10 @@ export async function GET(
   }
 
   try {
+    // Lazy import to avoid build-time initialization
+    const { USDAProvider } = await import('@/lib/nutrition/providers/usda')
+    const usda = new USDAProvider(process.env.USDA_API_KEY)
+    
     const food = await usda.getFood(id)
 
     if (!food) {
