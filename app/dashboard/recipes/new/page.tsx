@@ -104,11 +104,11 @@ export default function NewRecipePage() {
           prev.map((ing) =>
             ing.id === id
               ? {
-                  ...ing,
-                  searchResults: data.data.slice(0, 10),
-                  showResults: true,
-                  isSearching: false,
-                }
+                ...ing,
+                searchResults: data.data.slice(0, 10),
+                showResults: true,
+                isSearching: false,
+              }
               : ing
           )
         )
@@ -233,20 +233,20 @@ export default function NewRecipePage() {
   const computed =
     validIngredients.length > 0
       ? computeRecipeNutrition({
-          ingredients: validIngredients.map((ing) => ({
-            lineId: ing.id,
-            queryText: ing.name,
-            provider: 'USDA' as const,
-            providerFoodId: ing.providerFoodId,
-            selectedFoodName: ing.name,
-            matchConfidence: 1,
-            amountGrams: ing.grams,
-            nutrientSnapshotPer100g: ing.nutrients!,
-            allergensDetected: ing.allergens,
-            userAllergenOverride: null,
-          })),
-          servingsPerBatch,
-        })
+        ingredients: validIngredients.map((ing) => ({
+          lineId: ing.id,
+          queryText: ing.name,
+          provider: 'USDA' as const,
+          providerFoodId: ing.providerFoodId,
+          selectedFoodName: ing.name,
+          matchConfidence: 1,
+          amountGrams: ing.grams,
+          nutrientSnapshotPer100g: ing.nutrients!,
+          allergensDetected: ing.allergens,
+          userAllergenOverride: null,
+        })),
+        servingsPerBatch,
+      })
       : null
 
   return (
@@ -357,6 +357,12 @@ export default function NewRecipePage() {
                             updateIngredient(ingredient.id, { showResults: true })
                           }
                         }}
+                        onBlur={() => {
+                          // Delay hiding results to allow click events to fire
+                          setTimeout(() => {
+                            updateIngredient(ingredient.id, { showResults: false })
+                          }, 200)
+                        }}
                       />
                       {ingredient.isSearching && (
                         <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
@@ -416,7 +422,7 @@ export default function NewRecipePage() {
                       <span>
                         {Math.round(
                           (ingredient.nutrients.calories ?? 0) *
-                            (ingredient.grams / 100)
+                          (ingredient.grams / 100)
                         )}{' '}
                         cal
                       </span>
