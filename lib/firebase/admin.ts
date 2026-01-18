@@ -8,11 +8,30 @@ let adminApp: admin.app.App
 export function getAdminApp(): admin.app.App {
     if (!adminApp) {
         if (admin.apps.length === 0) {
-            // Initialize with automatic credentials from environment
-            // Vercel/Cloud environments automatically provide credentials
-            adminApp = admin.initializeApp({
-                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            })
+            // Try to load service account from environment variable
+            const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
+
+            if (serviceAccount) {
+                // Initialize with service account credentials
+                try {
+                    const credentials = JSON.parse(serviceAccount)
+                    adminApp = admin.initializeApp({
+                        credential: admin.credential.cert(credentials),
+                        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                    })
+                    console.log('[Firebase Admin] Initialized with service account')
+                } catch (error) {
+                    console.error('[Firebase Admin] Failed to parse service account:', error)
+                    throw new Error('Invalid Firebase service account credentials')
+                }
+            } else {
+                // Fallback: Initialize with just project ID
+                // This works in some environments but may have limited permissions
+                console.warn('[Firebase Admin] No service account found, using project ID only')
+                adminApp = admin.initializeApp({
+                    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                })
+            }
         } else {
             adminApp = admin.apps[0] as admin.app.App
         }
