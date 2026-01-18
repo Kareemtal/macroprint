@@ -14,7 +14,12 @@ export function getAdminApp(): admin.app.App {
             if (serviceAccount) {
                 // Initialize with service account credentials
                 try {
+                    console.log('[Firebase Admin] Service account length:', serviceAccount.length)
+                    console.log('[Firebase Admin] First 100 chars:', serviceAccount.substring(0, 100))
+
                     const credentials = JSON.parse(serviceAccount)
+                    console.log('[Firebase Admin] Parsed successfully, has type:', credentials.type)
+
                     adminApp = admin.initializeApp({
                         credential: admin.credential.cert(credentials),
                         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -22,6 +27,7 @@ export function getAdminApp(): admin.app.App {
                     console.log('[Firebase Admin] Initialized with service account')
                 } catch (error) {
                     console.error('[Firebase Admin] Failed to parse service account:', error)
+                    console.error('[Firebase Admin] Error message:', error instanceof Error ? error.message : 'Unknown')
                     throw new Error('Invalid Firebase service account credentials')
                 }
             } else {
