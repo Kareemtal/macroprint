@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  CheckCircle, 
-  Zap, 
-  Shield, 
-  Printer, 
+import {
+  CheckCircle,
+  Zap,
+  Shield,
+  Printer,
   Calculator,
   Scale,
   AlertTriangle,
@@ -64,7 +64,7 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              Stop wasting hours on spreadsheets or spending $500+ per recipe on consultants. 
+              Stop wasting hours on spreadsheets or spending $500+ per recipe on consultants.
               Generate professional nutrition labels that make your meal prep business look like a national brand.
             </p>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -96,7 +96,7 @@ export default function HomePage() {
               Mislabeled food costs more than you think
             </h2>
             <p className="mb-8 text-muted-foreground">
-              One wrong allergen warning, one miscalculated calorie count, and you're facing angry customers, 
+              One wrong allergen warning, one miscalculated calorie count, and you're facing angry customers,
               health department visits, or worse — lawsuits.
             </p>
           </div>
@@ -108,7 +108,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Nutrition consultants charge a premium for every recipe analysis. 
+                  Nutrition consultants charge a premium for every recipe analysis.
                   Change a single ingredient? Pay again.
                 </p>
               </CardContent>
@@ -120,7 +120,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Manual macro calculations break every time you scale a recipe. 
+                  Manual macro calculations break every time you scale a recipe.
                   From 4 servings to 40? Start over.
                 </p>
               </CardContent>
@@ -132,7 +132,7 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Handwritten labels or basic templates scream "home kitchen" 
+                  Handwritten labels or basic templates scream "home kitchen"
                   and cost you premium pricing opportunities.
                 </p>
               </CardContent>
@@ -290,7 +290,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-12">
         <div className="container">
-          <div className="grid gap-8 md:grid-cols-4">
+          <div className="grid gap-8 md:grid-cols-5">
             <div>
               <Link href="/" className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
@@ -305,16 +305,25 @@ export default function HomePage() {
             <div>
               <h3 className="mb-4 font-semibold">Product</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/nutrition-label-generator" className="hover:text-foreground">Label Generator</Link></li>
                 <li><Link href="/macro-calculator" className="hover:text-foreground">Free Calculator</Link></li>
                 <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
                 <li><Link href="/faq" className="hover:text-foreground">FAQ</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="mb-4 font-semibold">Resources</h3>
+              <h3 className="mb-4 font-semibold">Solutions</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/meal-prep-nutrition-labels" className="hover:text-foreground">Meal Prep Labels</Link></li>
                 <li><Link href="/allergen-labeling-guide" className="hover:text-foreground">Allergen Guide</Link></li>
-                <li><Link href="/nutrition-label-generator" className="hover:text-foreground">Label Generator</Link></li>
+                <li><Link href="/fda-labeling-requirements-meal-prep" className="hover:text-foreground">FDA Requirements</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-4 font-semibold">Learn</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link href="/how-to-create-nutrition-labels" className="hover:text-foreground">How to Create Labels</Link></li>
+                <li><Link href="/nutrition-labeling-mistakes" className="hover:text-foreground">Common Mistakes</Link></li>
               </ul>
             </div>
             <div>
@@ -328,7 +337,7 @@ export default function HomePage() {
           <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} MacroPrint. All rights reserved.</p>
             <p className="mt-2">
-              Disclaimer: MacroPrint provides FDA-style labels based on USDA data. 
+              Disclaimer: MacroPrint provides FDA-style labels based on USDA data.
               Users are responsible for verifying accuracy and compliance with local regulations.
             </p>
           </div>
