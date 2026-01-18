@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import { getAdminDb } from '@/lib/firebase/admin'
 import type { UserProfile } from '@/lib/types'
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,8 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Lazy import to avoid build-time initialization
     const { stripe, STRIPE_PRICES } = await import('@/lib/stripe/config')
-    const { getDb } = await import('@/lib/firebase/config')
-    const db = getDb()
+    const db = getAdminDb()
 
     console.log('[Checkout] Stripe prices:', STRIPE_PRICES)
 
@@ -49,12 +49,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
-    // Get user from Firestore
+    // Get user from Firestore using Admin SDK
     console.log('[Checkout] Fetching user from Firestore...')
-    const userRef = doc(db, 'users', userId)
-    const userSnap = await getDoc(userRef)
+    const userRef = db.collection('users').doc(userId)
+    const userSnap = await userRef.get()
 
-    if (!userSnap.exists()) {
+    if (!userSnap.exists) {
       console.error('[Checkout] User not found:', userId)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       customerId = customer.id
       console.log('[Checkout] Created customer:', customerId)
 
-      await updateDoc(userRef, { stripeCustomerId: customerId })
+      await userRef.update({ stripeCustomerId: customerId })
     }
 
     const priceId = plan === 'BASIC' ? STRIPE_PRICES.BASIC : STRIPE_PRICES.PRO
