@@ -81,19 +81,27 @@ export default function NewRecipePage() {
     }
   }
 
-  const updateIngredient = (id: string, updates: Partial<IngredientLine>) => {
-    setIngredients(
-      ingredients.map((ing) => (ing.id === id ? { ...ing, ...updates } : ing))
+  const updateIngredient = useCallback((id: string, updates: Partial<IngredientLine>) => {
+    setIngredients((prev) =>
+      prev.map((ing) => (ing.id === id ? { ...ing, ...updates } : ing))
     )
-  }
+  }, [])
 
   const searchIngredients = useCallback(async (id: string, query: string) => {
     if (query.length < 2) {
-      updateIngredient(id, { searchResults: [], showResults: false })
+      setIngredients((prev) =>
+        prev.map((ing) =>
+          ing.id === id ? { ...ing, searchResults: [], showResults: false } : ing
+        )
+      )
       return
     }
 
-    updateIngredient(id, { isSearching: true })
+    setIngredients((prev) =>
+      prev.map((ing) =>
+        ing.id === id ? { ...ing, isSearching: true } : ing
+      )
+    )
 
     try {
       const response = await fetch(`/api/foods/search?q=${encodeURIComponent(query)}`)

@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NutritionLabel } from '@/components/label/nutrition-label'
-import { 
-  Plus, 
-  Trash2, 
-  Search, 
+import {
+  Plus,
+  Trash2,
+  Search,
   Loader2,
   AlertCircle,
   Info
@@ -85,44 +85,63 @@ export function MacroCalculator() {
     }
   }
 
-  const updateIngredient = (id: string, updates: Partial<IngredientLine>) => {
-    setIngredients(
-      ingredients.map((ing) => (ing.id === id ? { ...ing, ...updates } : ing))
+  const updateIngredient = useCallback((id: string, updates: Partial<IngredientLine>) => {
+    setIngredients((prev) =>
+      prev.map((ing) => (ing.id === id ? { ...ing, ...updates } : ing))
     )
-  }
+  }, [])
 
   const searchIngredients = useCallback(async (id: string, query: string) => {
     if (query.length < 2) {
-      updateIngredient(id, { searchResults: [], showResults: false })
+      setIngredients((prev) =>
+        prev.map((ing) =>
+          ing.id === id ? { ...ing, searchResults: [], showResults: false } : ing
+        )
+      )
       return
     }
 
-    updateIngredient(id, { isSearching: true })
+    setIngredients((prev) =>
+      prev.map((ing) =>
+        ing.id === id ? { ...ing, isSearching: true } : ing
+      )
+    )
 
     try {
       const response = await fetch(`/api/foods/search?q=${encodeURIComponent(query)}`)
       const data = await response.json()
 
       if (data.success && data.data) {
-        updateIngredient(id, {
-          searchResults: data.data.slice(0, 10),
-          showResults: true,
-          isSearching: false,
-        })
+        setIngredients((prev) =>
+          prev.map((ing) =>
+            ing.id === id
+              ? {
+                ...ing,
+                searchResults: data.data.slice(0, 10),
+                showResults: true,
+                isSearching: false,
+              }
+              : ing
+          )
+        )
       } else {
-        updateIngredient(id, {
-          searchResults: [],
-          showResults: false,
-          isSearching: false,
-        })
+        setIngredients((prev) =>
+          prev.map((ing) =>
+            ing.id === id
+              ? { ...ing, searchResults: [], showResults: false, isSearching: false }
+              : ing
+          )
+        )
       }
     } catch (error) {
       console.error('Search error:', error)
-      updateIngredient(id, {
-        searchResults: [],
-        showResults: false,
-        isSearching: false,
-      })
+      setIngredients((prev) =>
+        prev.map((ing) =>
+          ing.id === id
+            ? { ...ing, searchResults: [], showResults: false, isSearching: false }
+            : ing
+        )
+      )
     }
   }, [])
 
@@ -155,49 +174,49 @@ export function MacroCalculator() {
 
   // Calculate totals
   const validIngredients = ingredients.filter((ing) => ing.nutrients !== null)
-  
+
   const computed = validIngredients.length > 0
     ? computeRecipeNutrition({
-        ingredients: validIngredients.map((ing) => ({
-          lineId: ing.id,
-          queryText: ing.name,
-          provider: 'USDA' as const,
-          providerFoodId: '',
-          selectedFoodName: ing.name,
-          matchConfidence: 1,
-          amountGrams: ing.grams,
-          nutrientSnapshotPer100g: ing.nutrients || EMPTY_NUTRIENTS,
-          allergensDetected: ing.allergens,
-          userAllergenOverride: null,
-        })),
-        servingsPerBatch: servings,
-      })
+      ingredients: validIngredients.map((ing) => ({
+        lineId: ing.id,
+        queryText: ing.name,
+        provider: 'USDA' as const,
+        providerFoodId: '',
+        selectedFoodName: ing.name,
+        matchConfidence: 1,
+        amountGrams: ing.grams,
+        nutrientSnapshotPer100g: ing.nutrients || EMPTY_NUTRIENTS,
+        allergensDetected: ing.allergens,
+        userAllergenOverride: null,
+      })),
+      servingsPerBatch: servings,
+    })
     : null
 
   const labelData: LabelData | null = computed
     ? {
-        servingsPerContainer: servings,
-        servingSize,
-        calories: computed.perServing.calories ?? 0,
-        totalFat: computed.perServing.totalFat ?? 0,
-        saturatedFat: computed.perServing.saturatedFat ?? 0,
-        transFat: computed.perServing.transFat ?? 0,
-        cholesterol: computed.perServing.cholesterol ?? 0,
-        sodium: computed.perServing.sodium ?? 0,
-        totalCarbohydrate: computed.perServing.totalCarbohydrate ?? 0,
-        dietaryFiber: computed.perServing.dietaryFiber ?? 0,
-        totalSugars: computed.perServing.totalSugars ?? 0,
-        addedSugars: computed.perServing.addedSugars,
-        protein: computed.perServing.protein ?? 0,
-        vitaminD: computed.perServing.vitaminD,
-        calcium: computed.perServing.calcium,
-        iron: computed.perServing.iron,
-        potassium: computed.perServing.potassium,
-        allergenStatement:
-          computed.allergenStatement.contains.length > 0
-            ? `Contains: ${computed.allergenStatement.contains.join(', ')}`
-            : undefined,
-      }
+      servingsPerContainer: servings,
+      servingSize,
+      calories: computed.perServing.calories ?? 0,
+      totalFat: computed.perServing.totalFat ?? 0,
+      saturatedFat: computed.perServing.saturatedFat ?? 0,
+      transFat: computed.perServing.transFat ?? 0,
+      cholesterol: computed.perServing.cholesterol ?? 0,
+      sodium: computed.perServing.sodium ?? 0,
+      totalCarbohydrate: computed.perServing.totalCarbohydrate ?? 0,
+      dietaryFiber: computed.perServing.dietaryFiber ?? 0,
+      totalSugars: computed.perServing.totalSugars ?? 0,
+      addedSugars: computed.perServing.addedSugars,
+      protein: computed.perServing.protein ?? 0,
+      vitaminD: computed.perServing.vitaminD,
+      calcium: computed.perServing.calcium,
+      iron: computed.perServing.iron,
+      potassium: computed.perServing.potassium,
+      allergenStatement:
+        computed.allergenStatement.contains.length > 0
+          ? `Contains: ${computed.allergenStatement.contains.join(', ')}`
+          : undefined,
+    }
     : null
 
   return (
@@ -416,7 +435,7 @@ export function MacroCalculator() {
             <div className="text-sm text-amber-800">
               <p className="font-medium">This is a preview</p>
               <p className="mt-1">
-                Sign up free to remove the watermark, save recipes, and export 
+                Sign up free to remove the watermark, save recipes, and export
                 print-ready PDF labels.
               </p>
             </div>
