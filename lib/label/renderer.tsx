@@ -324,6 +324,9 @@ function generateLabelContent(
   // Protein
   lines.push(`<text class="nutrient-bold" x="0" y="${y}">Protein</text>`)
   lines.push(`<text class="nutrient" x="${38 * scale}" y="${y}">${data.protein}g</text>`)
+  if (pdv.protein !== null) {
+    lines.push(`<text class="dv" x="${contentWidth}" y="${y}">${pdv.protein}%</text>`)
+  }
   y += lineHeight
 
   // Thick line before vitamins

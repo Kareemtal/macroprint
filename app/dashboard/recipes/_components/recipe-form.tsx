@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -118,40 +118,76 @@ export function RecipeForm({ initialData, onSubmit, isSubmitting }: RecipeFormPr
         )
     }, [])
 
-    const searchIngredients = useCallback(async (id: string, query: string) => {
+    // Refs for debouncing and aborting requests
+    const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const abortControllerRef = useRef<AbortController | null>(null)
+
+    const searchIngredients = useCallback((id: string, query: string) => {
+        // Clear any pending search
+        if (searchTimerRef.current) {
+            clearTimeout(searchTimerRef.current)
+        }
+
+        // Cancel any in-flight request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+        }
+
         if (query.length < 2) {
             setIngredients((prev) =>
                 prev.map((ing) =>
-                    ing.id === id ? { ...ing, searchResults: [], showResults: false } : ing
+                    ing.id === id ? { ...ing, searchResults: [], showResults: false, isSearching: false } : ing
                 )
             )
             return
         }
 
+        // Show searching state immediately
         setIngredients((prev) =>
             prev.map((ing) =>
-                ing.id === id ? { ...ing, isSearching: true } : ing
+                ing.id === id ? { ...ing, isSearching: true, showResults: true } : ing
             )
         )
 
-        try {
-            const response = await fetch(`/api/foods/search?q=${encodeURIComponent(query)}`)
-            const data = await response.json()
+        // Debounce the actual API call by 150ms
+        searchTimerRef.current = setTimeout(async () => {
+            const controller = new AbortController()
+            abortControllerRef.current = controller
 
-            if (data.success && data.data) {
-                setIngredients((prev) =>
-                    prev.map((ing) =>
-                        ing.id === id
-                            ? {
-                                ...ing,
-                                searchResults: data.data.slice(0, 10),
-                                showResults: true,
-                                isSearching: false,
-                            }
-                            : ing
+            try {
+                const response = await fetch(`/api/foods/search?q=${encodeURIComponent(query)}`, {
+                    signal: controller.signal,
+                })
+                const data = await response.json()
+
+                if (data.success && data.data) {
+                    setIngredients((prev) =>
+                        prev.map((ing) =>
+                            ing.id === id
+                                ? {
+                                    ...ing,
+                                    searchResults: data.data.slice(0, 10),
+                                    showResults: true,
+                                    isSearching: false,
+                                }
+                                : ing
+                        )
                     )
-                )
-            } else {
+                } else {
+                    setIngredients((prev) =>
+                        prev.map((ing) =>
+                            ing.id === id
+                                ? { ...ing, searchResults: [], showResults: false, isSearching: false }
+                                : ing
+                        )
+                    )
+                }
+            } catch (error: unknown) {
+                // Ignore abort errors
+                if (error instanceof Error && error.name === 'AbortError') {
+                    return
+                }
+                console.error('Search error:', error)
                 setIngredients((prev) =>
                     prev.map((ing) =>
                         ing.id === id
@@ -160,16 +196,7 @@ export function RecipeForm({ initialData, onSubmit, isSubmitting }: RecipeFormPr
                     )
                 )
             }
-        } catch (error) {
-            console.error('Search error:', error)
-            setIngredients((prev) =>
-                prev.map((ing) =>
-                    ing.id === id
-                        ? { ...ing, searchResults: [], showResults: false, isSearching: false }
-                        : ing
-                )
-            )
-        }
+        }, 150) // 150ms debounce for fast, responsive feel
     }, [])
 
     const selectFood = async (ingredientId: string, foodId: string, foodName: string) => {
@@ -356,7 +383,10 @@ export function RecipeForm({ initialData, onSubmit, isSubmitting }: RecipeFormPr
                                 Ingredients
                             </CardTitle>
                             <CardDescription>
-                                Search for ingredients and enter amounts in grams
+                                Search for ingredients and enter amounts in grams.
+                                <span className="block text-xs mt-1 text-amber-600">
+                                    Note: Capitalize the first letter of ingredient names for best results.
+                                </span>
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">

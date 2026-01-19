@@ -68,6 +68,10 @@ function calculatePercentDV(nutrients: any): PercentDailyValues {
   if (nutrients.dietaryFiber != null) dv.dietaryFiber = Math.round((nutrients.dietaryFiber / FDA_DAILY_VALUES.dietaryFiber) * 100)
   if (nutrients.addedSugars != null) dv.addedSugars = Math.round((nutrients.addedSugars / FDA_DAILY_VALUES.addedSugars) * 100)
   if (nutrients.protein != null) dv.protein = Math.round((nutrients.protein / FDA_DAILY_VALUES.protein) * 100)
+  if (nutrients.vitaminD != null) dv.vitaminD = Math.round((nutrients.vitaminD / FDA_DAILY_VALUES.vitaminD) * 100)
+  if (nutrients.calcium != null) dv.calcium = Math.round((nutrients.calcium / FDA_DAILY_VALUES.calcium) * 100)
+  if (nutrients.iron != null) dv.iron = Math.round((nutrients.iron / FDA_DAILY_VALUES.iron) * 100)
+  if (nutrients.potassium != null) dv.potassium = Math.round((nutrients.potassium / FDA_DAILY_VALUES.potassium) * 100)
 
   return dv
 }
@@ -92,6 +96,10 @@ interface LabelData {
   totalSugars: number
   addedSugars: number | null
   protein: number
+  vitaminD?: number | null
+  calcium?: number | null
+  iron?: number | null
+  potassium?: number | null
   allergenStatement?: string
   businessName?: string
   businessAddress?: string
@@ -103,7 +111,8 @@ function generateLabelSVG(data: LabelData, width: number, height: number): strin
   const scale = width / 200
   const pdv = data.pdv || {
     totalFat: null, saturatedFat: null, cholesterol: null, sodium: null,
-    totalCarbohydrate: null, dietaryFiber: null, addedSugars: null, protein: null
+    totalCarbohydrate: null, dietaryFiber: null, addedSugars: null, protein: null,
+    vitaminD: null, calcium: null, iron: null, potassium: null
   }
 
   // Helper to render DV percentage if present
@@ -116,15 +125,15 @@ function generateLabelSVG(data: LabelData, width: number, height: number): strin
   <style>
     .label-bg { fill: white; }
     .label-border { fill: none; stroke: black; stroke-width: ${2 * scale}; }
-    .title { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${22 * scale}px; }
-    .subtitle { font-family: Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
-    .serving { font-family: Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
-    .calories-label { font-family: Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
-    .calories-value { font-family: Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${36 * scale}px; }
-    .nutrient { font-family: Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
-    .nutrient-bold { font-family: Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; }
-    .dv { font-family: Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; text-anchor: end; }
-    .footer { font-family: Helvetica, Arial, sans-serif; font-size: ${7 * scale}px; }
+    .title { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${22 * scale}px; }
+    .subtitle { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
+    .serving { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
+    .calories-label { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
+    .calories-value { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${36 * scale}px; }
+    .nutrient { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
+    .nutrient-bold { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; }
+    .dv { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; text-anchor: end; }
+    .footer { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${7 * scale}px; }
     .hr-thick { stroke: black; stroke-width: ${8 * scale}; }
     .hr-medium { stroke: black; stroke-width: ${3 * scale}; }
     .hr-thin { stroke: black; stroke-width: ${1 * scale}; }
@@ -177,11 +186,28 @@ function generateLabelSVG(data: LabelData, width: number, height: number): strin
       <line class="hr-thin" x1="0" y1="${274 * scale}" x2="${width - 36 * scale}" y2="${274 * scale}" />
       
       <text class="nutrient-bold" x="0" y="${286 * scale}">Protein ${data.protein}g</text>
+      ${renderDV(pdv.protein, 286 * scale)}
       <line class="hr-thick" x1="0" y1="${296 * scale}" x2="${width - 36 * scale}" y2="${296 * scale}" />
+
+      <text class="nutrient" x="0" y="${308 * scale}">Vitamin D ${data.vitaminD || 0}mcg</text>
+      ${renderDV(pdv.vitaminD, 308 * scale)}
+      <line class="hr-thin" x1="0" y1="${314 * scale}" x2="${width - 36 * scale}" y2="${314 * scale}" />
+
+      <text class="nutrient" x="0" y="${326 * scale}">Calcium ${data.calcium || 0}mg</text>
+      ${renderDV(pdv.calcium, 326 * scale)}
+      <line class="hr-thin" x1="0" y1="${332 * scale}" x2="${width - 36 * scale}" y2="${332 * scale}" />
+
+      <text class="nutrient" x="0" y="${344 * scale}">Iron ${data.iron || 0}mg</text>
+      ${renderDV(pdv.iron, 344 * scale)}
+      <line class="hr-thin" x1="0" y1="${350 * scale}" x2="${width - 36 * scale}" y2="${350 * scale}" />
+
+      <text class="nutrient" x="0" y="${362 * scale}">Potassium ${data.potassium || 0}mg</text>
+      ${renderDV(pdv.potassium, 362 * scale)}
+      <line class="hr-medium" x1="0" y1="${372 * scale}" x2="${width - 36 * scale}" y2="${372 * scale}" />
       
-      <text class="footer" x="0" y="${310 * scale}">* The % Daily Value tells you how much a nutrient in</text>
-      <text class="footer" x="0" y="${320 * scale}">a serving contributes to a daily diet. 2,000 calories</text>
-      <text class="footer" x="0" y="${330 * scale}">a day is used for general nutrition advice.</text>
+      <text class="footer" x="0" y="${385 * scale}">* The % Daily Value tells you how much a nutrient in</text>
+      <text class="footer" x="0" y="${395 * scale}">a serving contributes to a daily diet. 2,000 calories</text>
+      <text class="footer" x="0" y="${405 * scale}">a day is used for general nutrition advice.</text>
     </g>
   </g>
 </svg>
@@ -287,11 +313,11 @@ export const exportLabel = functions
         }
 
         // Generate label dimensions based on preset
-        // Heights are calculated to fit the full label content (approx 350 * scale + margins)
+        // Heights are calculated to fit the full label content (approx 450 * scale + margins)
         const presets: Record<string, { width: number; height: number }> = {
-          '2x4': { width: 192, height: 480 },   // Height increased to fit content
-          '3x4': { width: 288, height: 540 },   // Height increased to fit content  
-          '4x6': { width: 384, height: 720 },   // Height increased to fit content
+          '2x4': { width: 192, height: 600 },   // Increased height to fit micronutrients
+          '3x4': { width: 288, height: 750 },   // Increased height
+          '4x6': { width: 384, height: 950 },   // Increased height
           '8.5x11': { width: 816, height: 1056 },
         }
 
@@ -315,6 +341,10 @@ export const exportLabel = functions
           totalSugars: Math.round(perServing.totalSugars || 0),
           addedSugars: perServing.addedSugars,
           protein: Math.round(perServing.protein || 0),
+          vitaminD: Math.round((perServing.vitaminD || 0) * 10) / 10,
+          calcium: Math.round(perServing.calcium || 0),
+          iron: Math.round((perServing.iron || 0) * 10) / 10,
+          potassium: Math.round(perServing.potassium || 0),
         }
 
         // Calculate % Daily Value
@@ -370,6 +400,8 @@ export const exportLabel = functions
               width: `${dims.width}px`,
               height: `${dims.height}px`,
               printBackground: true,
+              margin: { top: 0, right: 0, bottom: 0, left: 0 },
+              pageRanges: '1',
             }))
             contentType = 'application/pdf'
             extension = 'pdf'

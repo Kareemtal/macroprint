@@ -88,6 +88,12 @@ export default function LabelPage() {
 
     if (!recipe) return
 
+    // Open window immediately to avoid popup blockers
+    const newWindow = window.open('', '_blank')
+    if (newWindow) {
+      newWindow.document.write('<!DOCTYPE html><html><head><title>Generating Label...</title><style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f9fafb;color:#111827;}.loader{border:4px solid #e5e7eb;border-top:4px solid #000;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite;}@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}</style></head><body><div style="text-align:center"><div><div class="loader" style="margin:0 auto 16px auto"></div><p>Generating your label...</p><p style="font-size:14px;color:#6b7280">Please wait while we prepare your file.</p></div></div></body></html>')
+    }
+
     setIsExporting(true)
 
     try {
@@ -125,15 +131,12 @@ export default function LabelPage() {
       const data = responseData.result as { success: boolean; signedUrl?: string; error?: string }
 
       if (data.success && data.signedUrl) {
-        // Create invisible anchor to trigger download
-        const link = document.createElement('a')
-        link.href = data.signedUrl
-        link.target = '_blank'
-        link.rel = 'noopener noreferrer'
-        link.download = `nutrition-label-${recipeId}.${format.toLowerCase()}`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+        if (newWindow) {
+          newWindow.location.href = data.signedUrl
+        } else {
+          // Fallback if window failed to open
+          window.open(data.signedUrl, '_blank')
+        }
 
         toast({
           title: 'Export complete',
@@ -143,6 +146,9 @@ export default function LabelPage() {
         throw new Error(data.error || 'Export failed')
       }
     } catch (error: unknown) {
+      if (newWindow) {
+        newWindow.close()
+      }
       console.error('Export error:', error)
       const message = error instanceof Error ? error.message : 'Unknown error'
 
@@ -378,6 +384,44 @@ export default function LabelPage() {
           </Card>
         </div>
       </div>
+
+      {/* Export History */}
+      {recipe.exports && recipe.exports.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Export History</CardTitle>
+            <CardDescription>
+              Previously generated labels for this recipe
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...recipe.exports].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((item, i) => (
+                <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                  <div className="space-y-1">
+                    <p className="font-medium">
+                      {item.format} Label ({item.preset})
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString()} at {new Date(item.createdAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {item.signedUrl && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={item.signedUrl} download={`nutrition-label-${recipeId}-${i}.${item.format.toLowerCase()}`}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
