@@ -255,10 +255,18 @@ export default function LabelPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    {/* Standard Labels */}
                     <SelectItem value="2x4">2" × 4" (Thermal Label)</SelectItem>
                     <SelectItem value="3x4">3" × 4" (Standard Label)</SelectItem>
                     <SelectItem value="4x6">4" × 6" (Large Label)</SelectItem>
                     <SelectItem value="8.5x11">8.5" × 11" (Full Page)</SelectItem>
+                    {/* Avery Labels - Common for Food/Nutrition Facts */}
+                    <SelectItem value="avery-5163">Avery 5163/8163 (2" × 4") - Popular for Nutrition Facts</SelectItem>
+                    <SelectItem value="avery-5164">Avery 5164/8164 (3.33" × 4") - Ideal for Nutrition Facts</SelectItem>
+                    <SelectItem value="avery-5168">Avery 5168 (3.5" × 5") - Large Product Labels</SelectItem>
+                    <SelectItem value="avery-22822">Avery 22822 (2" Round) - Round Product Labels</SelectItem>
+                    <SelectItem value="avery-6874">Avery 6874 (1.5" × 2.5") - Small Product Labels</SelectItem>
+                    <SelectItem value="avery-5160">Avery 5160/8160 (1" × 2.625") - Address/Small Labels</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

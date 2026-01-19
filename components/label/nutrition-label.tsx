@@ -45,6 +45,13 @@ export function LabelPreview({ data, preset, showWatermark = false }: LabelPrevi
     '3x4': '200px',
     '4x6': '250px',
     '8.5x11': '300px',
+    // Avery Label Presets
+    'avery-5160': '180px',
+    'avery-5163': '250px',
+    'avery-5164': '250px',
+    'avery-22822': '150px',
+    'avery-6874': '175px',
+    'avery-5168': '280px',
   }
 
   const width = presetWidths[preset]

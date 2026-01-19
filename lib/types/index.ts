@@ -109,7 +109,18 @@ export interface ComputedNutrition {
   }
 }
 
-export type LabelFormatPreset = '2x4' | '3x4' | '4x6' | '8.5x11'
+export type LabelFormatPreset =
+  | '2x4'
+  | '3x4'
+  | '4x6'
+  | '8.5x11'
+  // Avery Label Presets
+  | 'avery-5160' // 1" × 2.625" - Small address/product labels
+  | 'avery-5163' // 2" × 4" - Shipping labels, popular for nutrition facts
+  | 'avery-5164' // 3.33" × 4" - Shipping labels, ideal for nutrition facts
+  | 'avery-22822' // 2" diameter - Round product labels
+  | 'avery-6874' // 1.5" × 2.5" - Product labels
+  | 'avery-5168' // 3.5" × 5" - Large shipping/product labels
 
 export interface LabelSettings {
   formatPreset: LabelFormatPreset
@@ -218,4 +229,11 @@ export const LABEL_PRESETS: Record<LabelFormatPreset, LabelDimensions> = {
   '3x4': { width: 3, height: 4, unit: 'in' },
   '4x6': { width: 4, height: 6, unit: 'in' },
   '8.5x11': { width: 8.5, height: 11, unit: 'in' },
+  // Avery Label Presets
+  'avery-5160': { width: 2.625, height: 1, unit: 'in' }, // 30 per sheet
+  'avery-5163': { width: 4, height: 2, unit: 'in' }, // 10 per sheet
+  'avery-5164': { width: 4, height: 3.33, unit: 'in' }, // 6 per sheet
+  'avery-22822': { width: 2, height: 2, unit: 'in' }, // Round, 12 per sheet
+  'avery-6874': { width: 2.5, height: 1.5, unit: 'in' }, // Product labels
+  'avery-5168': { width: 5, height: 3.5, unit: 'in' }, // 4 per sheet
 }

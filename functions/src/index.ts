@@ -107,111 +107,206 @@ interface LabelData {
 }
 
 // Generate nutrition label SVG
-function generateLabelSVG(data: LabelData, width: number, height: number): string {
-  const scale = width / 200
+// Uses viewBox to automatically scale content to fit target dimensions
+function generateLabelSVG(data: LabelData, width: number, height: number, isCompact: boolean = false): string {
   const pdv = data.pdv || {
     totalFat: null, saturatedFat: null, cholesterol: null, sodium: null,
     totalCarbohydrate: null, dietaryFiber: null, addedSugars: null, protein: null,
     vitaminD: null, calcium: null, iron: null, potassium: null
   }
 
-  // Helper to render DV percentage if present
-  const renderDV = (val: number | null, y: number) => {
-    return val !== null ? `<text class="dv" x="${width - 36 * scale}" y="${y}">${val}%</text>` : ''
-  }
+  // Design the label at a fixed coordinate system
+  // viewBox will scale it to fit the target width/height
+  const vw = 200  // viewBox width
+  const vh = isCompact ? 260 : 420  // viewBox height
 
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+  // For compact mode, use a condensed layout
+  if (isCompact) {
+    return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vw} ${vh}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet">
   <style>
-    .label-bg { fill: white; }
-    .label-border { fill: none; stroke: black; stroke-width: ${2 * scale}; }
-    .title { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${22 * scale}px; }
-    .subtitle { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
-    .serving { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
-    .calories-label { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${10 * scale}px; }
-    .calories-value { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; font-size: ${36 * scale}px; }
-    .nutrient { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${9 * scale}px; }
-    .nutrient-bold { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; }
-    .dv { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; font-size: ${9 * scale}px; text-anchor: end; }
-    .footer { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: ${7 * scale}px; }
-    .hr-thick { stroke: black; stroke-width: ${8 * scale}; }
-    .hr-medium { stroke: black; stroke-width: ${3 * scale}; }
-    .hr-thin { stroke: black; stroke-width: ${1 * scale}; }
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    .bg { fill: white; }
+    .border { fill: none; stroke: black; stroke-width: 1.5; }
+    .title { font-weight: 900; font-size: 16px; }
+    .bold { font-weight: bold; font-size: 7px; }
+    .normal { font-size: 7px; }
+    .small { font-size: 6px; }
+    .calories { font-weight: 900; font-size: 22px; }
+    .right { text-anchor: end; }
+    .thick { stroke: black; stroke-width: 6; }
+    .medium { stroke: black; stroke-width: 2; }
+    .thin { stroke: black; stroke-width: 0.5; }
   </style>
-  <rect class="label-bg" x="0" y="0" width="${width}" height="${height}" />
-  <g transform="translate(${10 * scale}, ${10 * scale})">
-    <rect class="label-border" x="0" y="0" width="${width - 20 * scale}" height="${height - 20 * scale}" />
-    <g transform="translate(${8 * scale}, ${8 * scale})">
-      <text class="title" x="0" y="${20 * scale}">Nutrition Facts</text>
-      <line class="hr-thick" x1="0" y1="${32 * scale}" x2="${width - 36 * scale}" y2="${32 * scale}" />
-      <text class="serving" x="0" y="${44 * scale}">${data.servingsPerContainer} servings per container</text>
-      <text class="nutrient-bold" x="0" y="${56 * scale}">Serving size</text>
-      <text class="nutrient-bold" x="${width - 36 * scale}" y="${56 * scale}" text-anchor="end">${data.servingSize}</text>
-      <line class="hr-thick" x1="0" y1="${66 * scale}" x2="${width - 36 * scale}" y2="${66 * scale}" />
-      <text class="subtitle" x="0" y="${84 * scale}">Amount per serving</text>
-      <text class="calories-label" x="0" y="${98 * scale}">Calories</text>
-      <text class="calories-value" x="${width - 36 * scale}" y="${102 * scale}" text-anchor="end">${data.calories}</text>
-      <line class="hr-medium" x1="0" y1="${112 * scale}" x2="${width - 36 * scale}" y2="${112 * scale}" />
-      <text class="dv" x="${width - 36 * scale}" y="${124 * scale}">% Daily Value*</text>
-      <line class="hr-thin" x1="0" y1="${130 * scale}" x2="${width - 36 * scale}" y2="${130 * scale}" />
+  <rect class="bg" width="${vw}" height="${vh}"/>
+  <g transform="translate(5, 5)">
+    <rect class="border" width="${vw - 10}" height="${vh - 10}"/>
+    <g transform="translate(5, 5)">
+      <text class="title" y="12">Nutrition Facts</text>
+      <line class="thick" x1="0" y1="16" x2="${vw - 20}" y2="16"/>
       
-      <text class="nutrient-bold" x="0" y="${142 * scale}">Total Fat ${data.totalFat}g</text>
-      ${renderDV(pdv.totalFat, 142 * scale)}
-      <line class="hr-thin" x1="0" y1="${148 * scale}" x2="${width - 36 * scale}" y2="${148 * scale}" />
+      <text class="small" y="24">${data.servingsPerContainer} servings per container</text>
+      <text class="bold" y="33">Serving size</text>
+      <text class="bold right" x="${vw - 20}" y="33">${data.servingSize}</text>
+      <line class="thick" x1="0" y1="38" x2="${vw - 20}" y2="38"/>
       
-      <text class="nutrient" x="${12 * scale}" y="${160 * scale}">Saturated Fat ${data.saturatedFat}g</text>
-      ${renderDV(pdv.saturatedFat, 160 * scale)}
-      <line class="hr-thin" x1="0" y1="${166 * scale}" x2="${width - 36 * scale}" y2="${166 * scale}" />
+      <text class="bold" y="50">Calories</text>
+      <text class="calories right" x="${vw - 20}" y="54">${data.calories}</text>
+      <line class="medium" x1="0" y1="58" x2="${vw - 20}" y2="58"/>
       
-      <text class="nutrient" x="${12 * scale}" y="${178 * scale}">Trans Fat ${data.transFat}g</text>
-      <line class="hr-thin" x1="0" y1="${184 * scale}" x2="${width - 36 * scale}" y2="${184 * scale}" />
+      <text class="bold right" x="${vw - 20}" y="66">% DV*</text>
+      <line class="thin" x1="0" y1="69" x2="${vw - 20}" y2="69"/>
       
-      <text class="nutrient-bold" x="0" y="${196 * scale}">Cholesterol ${data.cholesterol}mg</text>
-      ${renderDV(pdv.cholesterol, 196 * scale)}
-      <line class="hr-thin" x1="0" y1="${202 * scale}" x2="${width - 36 * scale}" y2="${202 * scale}" />
+      <text class="bold" y="77">Total Fat ${data.totalFat}g</text>
+      ${pdv.totalFat !== null ? `<text class="bold right" x="${vw - 20}" y="77">${pdv.totalFat}%</text>` : ''}
+      <line class="thin" x1="0" y1="80" x2="${vw - 20}" y2="80"/>
       
-      <text class="nutrient-bold" x="0" y="${214 * scale}">Sodium ${data.sodium}mg</text>
-      ${renderDV(pdv.sodium, 214 * scale)}
-      <line class="hr-thin" x1="0" y1="${220 * scale}" x2="${width - 36 * scale}" y2="${220 * scale}" />
+      <text class="normal" x="8" y="88">Sat. Fat ${data.saturatedFat}g</text>
+      ${pdv.saturatedFat !== null ? `<text class="bold right" x="${vw - 20}" y="88">${pdv.saturatedFat}%</text>` : ''}
+      <line class="thin" x1="0" y1="91" x2="${vw - 20}" y2="91"/>
       
-      <text class="nutrient-bold" x="0" y="${232 * scale}">Total Carbohydrate ${data.totalCarbohydrate}g</text>
-      ${renderDV(pdv.totalCarbohydrate, 232 * scale)}
-      <line class="hr-thin" x1="0" y1="${238 * scale}" x2="${width - 36 * scale}" y2="${238 * scale}" />
+      <text class="normal" x="8" y="99">Trans Fat ${data.transFat}g</text>
+      <line class="thin" x1="0" y1="102" x2="${vw - 20}" y2="102"/>
       
-      <text class="nutrient" x="${12 * scale}" y="${250 * scale}">Dietary Fiber ${data.dietaryFiber}g</text>
-      ${renderDV(pdv.dietaryFiber, 250 * scale)}
-      <line class="hr-thin" x1="0" y1="${256 * scale}" x2="${width - 36 * scale}" y2="${256 * scale}" />
+      <text class="bold" y="110">Cholest. ${data.cholesterol}mg</text>
+      ${pdv.cholesterol !== null ? `<text class="bold right" x="${vw - 20}" y="110">${pdv.cholesterol}%</text>` : ''}
+      <line class="thin" x1="0" y1="113" x2="${vw - 20}" y2="113"/>
       
-      <text class="nutrient" x="${12 * scale}" y="${268 * scale}">Total Sugars ${data.totalSugars}g</text>
-      <line class="hr-thin" x1="0" y1="${274 * scale}" x2="${width - 36 * scale}" y2="${274 * scale}" />
+      <text class="bold" y="121">Sodium ${data.sodium}mg</text>
+      ${pdv.sodium !== null ? `<text class="bold right" x="${vw - 20}" y="121">${pdv.sodium}%</text>` : ''}
+      <line class="thin" x1="0" y1="124" x2="${vw - 20}" y2="124"/>
       
-      <text class="nutrient-bold" x="0" y="${286 * scale}">Protein ${data.protein}g</text>
-      ${renderDV(pdv.protein, 286 * scale)}
-      <line class="hr-thick" x1="0" y1="${296 * scale}" x2="${width - 36 * scale}" y2="${296 * scale}" />
-
-      <text class="nutrient" x="0" y="${308 * scale}">Vitamin D ${data.vitaminD || 0}mcg</text>
-      ${renderDV(pdv.vitaminD, 308 * scale)}
-      <line class="hr-thin" x1="0" y1="${314 * scale}" x2="${width - 36 * scale}" y2="${314 * scale}" />
-
-      <text class="nutrient" x="0" y="${326 * scale}">Calcium ${data.calcium || 0}mg</text>
-      ${renderDV(pdv.calcium, 326 * scale)}
-      <line class="hr-thin" x1="0" y1="${332 * scale}" x2="${width - 36 * scale}" y2="${332 * scale}" />
-
-      <text class="nutrient" x="0" y="${344 * scale}">Iron ${data.iron || 0}mg</text>
-      ${renderDV(pdv.iron, 344 * scale)}
-      <line class="hr-thin" x1="0" y1="${350 * scale}" x2="${width - 36 * scale}" y2="${350 * scale}" />
-
-      <text class="nutrient" x="0" y="${362 * scale}">Potassium ${data.potassium || 0}mg</text>
-      ${renderDV(pdv.potassium, 362 * scale)}
-      <line class="hr-medium" x1="0" y1="${372 * scale}" x2="${width - 36 * scale}" y2="${372 * scale}" />
+      <text class="bold" y="132">Total Carb. ${data.totalCarbohydrate}g</text>
+      ${pdv.totalCarbohydrate !== null ? `<text class="bold right" x="${vw - 20}" y="132">${pdv.totalCarbohydrate}%</text>` : ''}
+      <line class="thin" x1="0" y1="135" x2="${vw - 20}" y2="135"/>
       
-      <text class="footer" x="0" y="${385 * scale}">* The % Daily Value tells you how much a nutrient in</text>
-      <text class="footer" x="0" y="${395 * scale}">a serving contributes to a daily diet. 2,000 calories</text>
-      <text class="footer" x="0" y="${405 * scale}">a day is used for general nutrition advice.</text>
+      <text class="normal" x="8" y="143">Fiber ${data.dietaryFiber}g</text>
+      ${pdv.dietaryFiber !== null ? `<text class="bold right" x="${vw - 20}" y="143">${pdv.dietaryFiber}%</text>` : ''}
+      <line class="thin" x1="0" y1="146" x2="${vw - 20}" y2="146"/>
+      
+      <text class="normal" x="8" y="154">Sugars ${data.totalSugars}g</text>
+      <line class="thin" x1="0" y1="157" x2="${vw - 20}" y2="157"/>
+      
+      <text class="bold" y="165">Protein ${data.protein}g</text>
+      ${pdv.protein !== null ? `<text class="bold right" x="${vw - 20}" y="165">${pdv.protein}%</text>` : ''}
+      <line class="thick" x1="0" y1="170" x2="${vw - 20}" y2="170"/>
+      
+      <text class="normal" y="180">Vit D ${data.vitaminD || 0}mcg</text>
+      ${pdv.vitaminD !== null ? `<text class="bold right" x="${vw - 20}" y="180">${pdv.vitaminD}%</text>` : ''}
+      <line class="thin" x1="0" y1="183" x2="${vw - 20}" y2="183"/>
+      
+      <text class="normal" y="191">Calcium ${data.calcium || 0}mg</text>
+      ${pdv.calcium !== null ? `<text class="bold right" x="${vw - 20}" y="191">${pdv.calcium}%</text>` : ''}
+      <line class="thin" x1="0" y1="194" x2="${vw - 20}" y2="194"/>
+      
+      <text class="normal" y="202">Iron ${data.iron || 0}mg</text>
+      ${pdv.iron !== null ? `<text class="bold right" x="${vw - 20}" y="202">${pdv.iron}%</text>` : ''}
+      <line class="thin" x1="0" y1="205" x2="${vw - 20}" y2="205"/>
+      
+      <text class="normal" y="213">Potassium ${data.potassium || 0}mg</text>
+      ${pdv.potassium !== null ? `<text class="bold right" x="${vw - 20}" y="213">${pdv.potassium}%</text>` : ''}
+      <line class="thin" x1="0" y1="216" x2="${vw - 20}" y2="216"/>
+      
+      <text class="small" y="226">* % DV based on 2,000 calorie diet</text>
     </g>
   </g>
-</svg>
-`
+</svg>`
+  }
+
+  // Full size label
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vw} ${vh}" width="${width}" height="${height}" preserveAspectRatio="xMidYMid meet">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    .bg { fill: white; }
+    .border { fill: none; stroke: black; stroke-width: 2; }
+    .title { font-weight: 900; font-size: 22px; }
+    .subtitle { font-weight: bold; font-size: 10px; }
+    .bold { font-weight: bold; font-size: 9px; }
+    .normal { font-size: 9px; }
+    .small { font-size: 7px; }
+    .calories { font-weight: 900; font-size: 36px; }
+    .right { text-anchor: end; }
+    .thick { stroke: black; stroke-width: 8; }
+    .medium { stroke: black; stroke-width: 3; }
+    .thin { stroke: black; stroke-width: 1; }
+  </style>
+  <rect class="bg" width="${vw}" height="${vh}"/>
+  <g transform="translate(8, 8)">
+    <rect class="border" width="${vw - 16}" height="${vh - 16}"/>
+    <g transform="translate(6, 6)">
+      <text class="title" y="18">Nutrition Facts</text>
+      <line class="thick" x1="0" y1="26" x2="${vw - 28}" y2="26"/>
+      
+      <text class="normal" y="40">${data.servingsPerContainer} servings per container</text>
+      <text class="bold" y="54">Serving size</text>
+      <text class="bold right" x="${vw - 28}" y="54">${data.servingSize}</text>
+      <line class="thick" x1="0" y1="62" x2="${vw - 28}" y2="62"/>
+      
+      <text class="subtitle" y="80">Amount per serving</text>
+      <text class="bold" y="94">Calories</text>
+      <text class="calories right" x="${vw - 28}" y="100">${data.calories}</text>
+      <line class="medium" x1="0" y1="108" x2="${vw - 28}" y2="108"/>
+      
+      <text class="bold right" x="${vw - 28}" y="120">% Daily Value*</text>
+      <line class="thin" x1="0" y1="126" x2="${vw - 28}" y2="126"/>
+      
+      <text class="bold" y="138">Total Fat ${data.totalFat}g</text>
+      ${pdv.totalFat !== null ? `<text class="bold right" x="${vw - 28}" y="138">${pdv.totalFat}%</text>` : ''}
+      <line class="thin" x1="0" y1="144" x2="${vw - 28}" y2="144"/>
+      
+      <text class="normal" x="12" y="156">Saturated Fat ${data.saturatedFat}g</text>
+      ${pdv.saturatedFat !== null ? `<text class="bold right" x="${vw - 28}" y="156">${pdv.saturatedFat}%</text>` : ''}
+      <line class="thin" x1="0" y1="162" x2="${vw - 28}" y2="162"/>
+      
+      <text class="normal" x="12" y="174">Trans Fat ${data.transFat}g</text>
+      <line class="thin" x1="0" y1="180" x2="${vw - 28}" y2="180"/>
+      
+      <text class="bold" y="192">Cholesterol ${data.cholesterol}mg</text>
+      ${pdv.cholesterol !== null ? `<text class="bold right" x="${vw - 28}" y="192">${pdv.cholesterol}%</text>` : ''}
+      <line class="thin" x1="0" y1="198" x2="${vw - 28}" y2="198"/>
+      
+      <text class="bold" y="210">Sodium ${data.sodium}mg</text>
+      ${pdv.sodium !== null ? `<text class="bold right" x="${vw - 28}" y="210">${pdv.sodium}%</text>` : ''}
+      <line class="thin" x1="0" y1="216" x2="${vw - 28}" y2="216"/>
+      
+      <text class="bold" y="228">Total Carbohydrate ${data.totalCarbohydrate}g</text>
+      ${pdv.totalCarbohydrate !== null ? `<text class="bold right" x="${vw - 28}" y="228">${pdv.totalCarbohydrate}%</text>` : ''}
+      <line class="thin" x1="0" y1="234" x2="${vw - 28}" y2="234"/>
+      
+      <text class="normal" x="12" y="246">Dietary Fiber ${data.dietaryFiber}g</text>
+      ${pdv.dietaryFiber !== null ? `<text class="bold right" x="${vw - 28}" y="246">${pdv.dietaryFiber}%</text>` : ''}
+      <line class="thin" x1="0" y1="252" x2="${vw - 28}" y2="252"/>
+      
+      <text class="normal" x="12" y="264">Total Sugars ${data.totalSugars}g</text>
+      <line class="thin" x1="0" y1="270" x2="${vw - 28}" y2="270"/>
+      
+      <text class="bold" y="282">Protein ${data.protein}g</text>
+      ${pdv.protein !== null ? `<text class="bold right" x="${vw - 28}" y="282">${pdv.protein}%</text>` : ''}
+      <line class="thick" x1="0" y1="292" x2="${vw - 28}" y2="292"/>
+      
+      <text class="normal" y="306">Vitamin D ${data.vitaminD || 0}mcg</text>
+      ${pdv.vitaminD !== null ? `<text class="bold right" x="${vw - 28}" y="306">${pdv.vitaminD}%</text>` : ''}
+      <line class="thin" x1="0" y1="312" x2="${vw - 28}" y2="312"/>
+      
+      <text class="normal" y="324">Calcium ${data.calcium || 0}mg</text>
+      ${pdv.calcium !== null ? `<text class="bold right" x="${vw - 28}" y="324">${pdv.calcium}%</text>` : ''}
+      <line class="thin" x1="0" y1="330" x2="${vw - 28}" y2="330"/>
+      
+      <text class="normal" y="342">Iron ${data.iron || 0}mg</text>
+      ${pdv.iron !== null ? `<text class="bold right" x="${vw - 28}" y="342">${pdv.iron}%</text>` : ''}
+      <line class="thin" x1="0" y1="348" x2="${vw - 28}" y2="348"/>
+      
+      <text class="normal" y="360">Potassium ${data.potassium || 0}mg</text>
+      ${pdv.potassium !== null ? `<text class="bold right" x="${vw - 28}" y="360">${pdv.potassium}%</text>` : ''}
+      <line class="medium" x1="0" y1="368" x2="${vw - 28}" y2="368"/>
+      
+      <text class="small" y="382">* The % Daily Value tells you how much a nutrient in</text>
+      <text class="small" y="392">a serving contributes to a daily diet. 2,000 calories</text>
+      <text class="small" y="402">a day is used for general nutrition advice.</text>
+    </g>
+  </g>
+</svg>`
 }
 
 // Helper function to verify Firebase ID token
@@ -312,17 +407,6 @@ export const exportLabel = functions
           return
         }
 
-        // Generate label dimensions based on preset
-        // Heights are calculated to fit the full label content (approx 450 * scale + margins)
-        const presets: Record<string, { width: number; height: number }> = {
-          '2x4': { width: 192, height: 600 },   // Increased height to fit micronutrients
-          '3x4': { width: 288, height: 750 },   // Increased height
-          '4x6': { width: 384, height: 950 },   // Increased height
-          '8.5x11': { width: 816, height: 1056 },
-        }
-
-        const dims = presets[data.preset] || presets['3x4']
-
         // Build label data from recipe
         const computed = recipe.computed || {}
         const perServing = computed.perServing || {}
@@ -361,8 +445,139 @@ export const exportLabel = functions
           labelData.allergenStatement = `Contains: ${computed.allergenStatement.contains.join(', ')}`
         }
 
-        // Generate SVG
-        const svg = generateLabelSVG(labelData, dims.width, dims.height)
+        // Avery sheet layouts - dimensions in pixels at 96 DPI
+        // Each preset defines: label size, sheet size (8.5x11"), labels per sheet, margins
+        interface AverySheetLayout {
+          labelWidth: number
+          labelHeight: number
+          sheetWidth: number
+          sheetHeight: number
+          columns: number
+          rows: number
+          marginTop: number
+          marginLeft: number
+          gapX: number
+          gapY: number
+        }
+
+        const averyLayouts: Record<string, AverySheetLayout> = {
+          'avery-5160': {
+            // 1" × 2.625" - 30 per sheet (3 columns × 10 rows)
+            labelWidth: 252, labelHeight: 96,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 3, rows: 10,
+            marginTop: 48, marginLeft: 14,
+            gapX: 12, gapY: 0,
+          },
+          'avery-5163': {
+            // 2" × 4" - 10 per sheet (2 columns × 5 rows)
+            labelWidth: 384, labelHeight: 192,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 2, rows: 5,
+            marginTop: 48, marginLeft: 14,
+            gapX: 20, gapY: 0,
+          },
+          'avery-5164': {
+            // 3.33" × 4" - 6 per sheet (2 columns × 3 rows)
+            labelWidth: 384, labelHeight: 320,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 2, rows: 3,
+            marginTop: 48, marginLeft: 14,
+            gapX: 20, gapY: 24,
+          },
+          'avery-22822': {
+            // 2" diameter round - 12 per sheet (3 columns × 4 rows)
+            labelWidth: 192, labelHeight: 192,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 3, rows: 4,
+            marginTop: 72, marginLeft: 72,
+            gapX: 84, gapY: 72,
+          },
+          'avery-6874': {
+            // 1.5" × 2.5" - 18 per sheet (3 columns × 6 rows)
+            labelWidth: 240, labelHeight: 144,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 3, rows: 6,
+            marginTop: 48, marginLeft: 48,
+            gapX: 24, gapY: 24,
+          },
+          'avery-5168': {
+            // 3.5" × 5" - 4 per sheet (2 columns × 2 rows)
+            labelWidth: 480, labelHeight: 336,
+            sheetWidth: 816, sheetHeight: 1056,
+            columns: 2, rows: 2,
+            marginTop: 96, marginLeft: 48,
+            gapX: 0, gapY: 96,
+          },
+        }
+
+        // Standard single-label presets (non-Avery)
+        const standardPresets: Record<string, { width: number; height: number }> = {
+          '2x4': { width: 192, height: 600 },
+          '3x4': { width: 288, height: 750 },
+          '4x6': { width: 384, height: 950 },
+          '8.5x11': { width: 816, height: 1056 },
+        }
+
+        const isAveryPreset = data.preset.startsWith('avery-')
+        let finalWidth: number
+        let finalHeight: number
+        let svgContent: string
+
+        if (isAveryPreset && averyLayouts[data.preset]) {
+          // Generate full sheet with multiple labels
+          const layout = averyLayouts[data.preset]
+          finalWidth = layout.sheetWidth
+          finalHeight = layout.sheetHeight
+
+          // Generate label SVG at the correct size with compact mode for Avery labels
+          const singleLabelSvg = generateLabelSVG(labelData, layout.labelWidth, layout.labelHeight, true)
+
+          // Create full sheet with tiled labels
+          const labels: string[] = []
+          for (let row = 0; row < layout.rows; row++) {
+            for (let col = 0; col < layout.columns; col++) {
+              const x = layout.marginLeft + col * (layout.labelWidth + layout.gapX)
+              const y = layout.marginTop + row * (layout.labelHeight + layout.gapY)
+              labels.push(`
+                <g transform="translate(${x}, ${y})">
+                  ${singleLabelSvg.replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}
+                </g>
+              `)
+            }
+          }
+
+          svgContent = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${finalWidth} ${finalHeight}" width="${finalWidth}" height="${finalHeight}">
+              <style>
+                .label-bg { fill: white; }
+                .label-border { fill: none; stroke: black; stroke-width: 2; }
+                .title { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; }
+                .subtitle { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; }
+                .serving { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+                .calories-label { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; }
+                .calories-value { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: 900; }
+                .nutrient { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+                .nutrient-bold { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; }
+                .dv { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-weight: bold; text-anchor: end; }
+                .footer { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+                .hr-thick { stroke: black; }
+                .hr-medium { stroke: black; }
+                .hr-thin { stroke: black; }
+              </style>
+              <rect class="label-bg" x="0" y="0" width="${finalWidth}" height="${finalHeight}" />
+              ${labels.join('\n')}
+            </svg>
+          `
+        } else {
+          // Standard single-label export
+          const dims = standardPresets[data.preset] || standardPresets['3x4']
+          finalWidth = dims.width
+          finalHeight = dims.height
+          svgContent = generateLabelSVG(labelData, finalWidth, finalHeight)
+        }
+
+        const svg = svgContent
 
         // Use Puppeteer to render
         console.log('Launching puppeteer...')
@@ -376,7 +591,7 @@ export const exportLabel = functions
 
         try {
           const page = await browser.newPage()
-          await page.setViewport({ width: dims.width, height: dims.height })
+          await page.setViewport({ width: finalWidth, height: finalHeight })
           await page.setContent(`
           <!DOCTYPE html>
           <html>
@@ -397,8 +612,8 @@ export const exportLabel = functions
 
           if (data.format === 'PDF') {
             buffer = Buffer.from(await page.pdf({
-              width: `${dims.width}px`,
-              height: `${dims.height}px`,
+              width: `${finalWidth}px`,
+              height: `${finalHeight}px`,
               printBackground: true,
               margin: { top: 0, right: 0, bottom: 0, left: 0 },
               pageRanges: '1',

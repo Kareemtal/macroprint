@@ -22,6 +22,13 @@ const PRESET_DIMENSIONS: Record<LabelFormatPreset, LabelDimensions> = {
   '3x4': { width: 3, height: 4, unit: 'in' },
   '4x6': { width: 4, height: 6, unit: 'in' },
   '8.5x11': { width: 8.5, height: 11, unit: 'in' },
+  // Avery Label Presets
+  'avery-5160': { width: 2.625, height: 1, unit: 'in' },
+  'avery-5163': { width: 4, height: 2, unit: 'in' },
+  'avery-5164': { width: 4, height: 3.33, unit: 'in' },
+  'avery-22822': { width: 2, height: 2, unit: 'in' },
+  'avery-6874': { width: 2.5, height: 1.5, unit: 'in' },
+  'avery-5168': { width: 5, height: 3.5, unit: 'in' },
 }
 
 /**
