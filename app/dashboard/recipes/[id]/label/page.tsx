@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getFunctions, httpsCallable } from 'firebase/functions'
+import { getAuth } from 'firebase/auth'
+import { getApp } from '@/lib/firebase/config'
 
 export default function LabelPage() {
   const params = useParams()
@@ -90,20 +91,49 @@ export default function LabelPage() {
     setIsExporting(true)
 
     try {
-      const functions = getFunctions()
-      const exportLabel = httpsCallable(functions, 'exportLabel')
+      // Get the current user's ID token for authentication
+      const auth = getAuth(getApp())
+      const currentUser = auth.currentUser
+      if (!currentUser) {
+        throw new Error('User not authenticated')
+      }
 
-      const result = await exportLabel({
-        recipeId: recipe.id,
-        format,
-        preset,
+      const idToken = await currentUser.getIdToken()
+
+      // Call the Cloud Function directly via HTTP
+      const functionUrl = 'https://us-central1-ghost-caddie.cloudfunctions.net/exportLabel'
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          recipeId: recipe.id,
+          format,
+          preset,
+        }),
       })
 
-      const data = result.data as { success: boolean; signedUrl?: string; error?: string }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Export failed with status ${response.status}`)
+      }
+
+      const responseData = await response.json()
+      const data = responseData.result as { success: boolean; signedUrl?: string; error?: string }
 
       if (data.success && data.signedUrl) {
-        // Open the download URL
-        window.open(data.signedUrl, '_blank')
+        // Create invisible anchor to trigger download
+        const link = document.createElement('a')
+        link.href = data.signedUrl
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        link.download = `nutrition-label-${recipeId}.${format.toLowerCase()}`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
 
         toast({
           title: 'Export complete',
@@ -115,7 +145,7 @@ export default function LabelPage() {
     } catch (error: unknown) {
       console.error('Export error:', error)
       const message = error instanceof Error ? error.message : 'Unknown error'
-      
+
       if (message.includes('limit')) {
         toast({
           title: 'Export limit reached',
@@ -162,9 +192,9 @@ export default function LabelPage() {
     },
     profile?.businessProfile
       ? {
-          name: profile.businessProfile.name,
-          address: profile.businessProfile.address || undefined,
-        }
+        name: profile.businessProfile.name,
+        address: profile.businessProfile.address || undefined,
+      }
       : undefined
   )
 
@@ -192,12 +222,12 @@ export default function LabelPage() {
               {preset} format • {recipe.servingsPerBatch} servings
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
+          <CardContent className="flex justify-center overflow-auto max-h-[600px]">
             <NutritionLabel
               data={labelData}
               preset={preset}
               showWatermark={!isPaidPlan}
-              className="max-w-[300px]"
+              className="w-full max-w-[300px]"
             />
           </CardContent>
         </Card>

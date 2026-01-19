@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     // Lazy import to avoid build-time initialization
     const { USDAProvider } = await import('@/lib/nutrition/providers/usda')
     const usda = new USDAProvider(process.env.USDA_API_KEY)
-    
+
     const results = await usda.searchFoods(query, { limit: 20 })
 
     return NextResponse.json({
@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
       data: results,
     })
   } catch (error) {
+    console.log('Search Error Debug:', {
+      hasKey: !!process.env.USDA_API_KEY,
+      keyLength: process.env.USDA_API_KEY?.length,
+      error
+    })
     console.error('Food search error:', error)
     return NextResponse.json(
       {

@@ -17,6 +17,8 @@ export interface UserProfile {
   businessProfile: BusinessProfile | null
   exportCountToday: number
   lastExportDate: string | null
+  bonusExports?: number
+  isAdmin?: boolean
 }
 
 export interface BusinessProfile {
@@ -148,7 +150,7 @@ export interface Recipe {
 // AUDIT TYPES
 // ============================================================================
 
-export type AuditEventType = 
+export type AuditEventType =
   | 'DISCLAIMER_ACCEPTED'
   | 'EXPORT_CREATED'
   | 'PLAN_CHANGED'

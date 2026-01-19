@@ -25,6 +25,86 @@ const PRESET_DIMENSIONS: Record<LabelFormatPreset, LabelDimensions> = {
 }
 
 /**
+ * Calculate the required height for label content
+ */
+function calculateContentHeight(
+  data: LabelData,
+  scale: number
+): number {
+  const lineHeight = 12 * scale
+  let y = 0
+
+  // Title + thick line
+  y += 26 * scale
+  y += 12 * scale
+
+  // Servings + serving size
+  y += lineHeight
+  y += 14 * scale
+
+  // Thick line + amount per serving
+  y += 20 * scale
+  y += 14 * scale
+
+  // Calories
+  y += 36 * scale
+
+  // Medium line + DV header
+  y += lineHeight
+  y += lineHeight
+
+  // Thin line + nutrients (Total Fat, Sat Fat, Trans Fat, Cholesterol, Sodium, Total Carb, Fiber, Sugars)
+  const nutrientLines = 8
+  y += (lineHeight * 2) * nutrientLines // each nutrient has line + value
+
+  // Added sugars (if present)
+  if (data.addedSugars !== null) {
+    y += lineHeight * 2
+  }
+
+  // Protein
+  y += lineHeight
+
+  // Thick line
+  y += lineHeight
+
+  // Vitamins/minerals (conditionally)
+  if (data.vitaminD !== null) y += lineHeight * 2
+  if (data.calcium !== null) y += lineHeight * 2
+  if (data.iron !== null) y += lineHeight * 2
+  if (data.potassium !== null) y += lineHeight * 2
+
+  // Footer text (3 lines)
+  y += 4 * scale
+  y += 8 * scale * 3
+  y += 12 * scale
+
+  // Allergen statement
+  if (data.allergenStatement) {
+    y += lineHeight * 2
+  }
+
+  // Business info
+  if (data.businessName) {
+    y += 4 * scale
+    y += 10 * scale
+    if (data.businessAddress) {
+      y += 10 * scale
+    }
+  }
+
+  // Net weight
+  if (data.netWeight) {
+    y += 10 * scale
+  }
+
+  // Add padding for inner container (8 * scale * 2) and outer container (10 * scale * 2)
+  y += 36 * scale
+
+  return y
+}
+
+/**
  * Generate FDA-style Nutrition Facts label as SVG string
  */
 export function generateLabelSVG(
@@ -34,10 +114,14 @@ export function generateLabelSVG(
   const dimensions = PRESET_DIMENSIONS[options.preset]
   const dpi = options.forPrint ? DPI : SCREEN_DPI
   const width = inchesToPx(dimensions.width, dpi)
-  const height = inchesToPx(dimensions.height, dpi)
 
   // Calculate scale factor based on preset
   const scale = width / 200 // Base width is 200 units
+
+  // Calculate dynamic height based on content, with minimum from preset
+  const minHeight = inchesToPx(dimensions.height, dpi)
+  const contentHeight = calculateContentHeight(data, scale)
+  const height = Math.max(minHeight, contentHeight)
 
   const pdv = calculatePercentDV({
     calories: data.calories,
@@ -59,7 +143,7 @@ export function generateLabelSVG(
 
   // Build SVG content
   const svg = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" preserveAspectRatio="xMidYMin meet">
   <defs>
     <style>
       .label-bg { fill: white; }

@@ -20,7 +20,7 @@ export class USDAProvider implements NutritionProvider {
   private apiKey: string
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.USDA_API_KEY || ''
+    this.apiKey = (apiKey || process.env.USDA_API_KEY || '').trim()
     if (!this.apiKey) {
       console.warn('USDA API key not configured')
     }
@@ -48,7 +48,8 @@ export class USDAProvider implements NutritionProvider {
     const response = await fetch(`${USDA_API_BASE}/foods/search?${params}`)
 
     if (!response.ok) {
-      throw new Error(`USDA API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      throw new Error(`USDA API error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     const data: USDASearchResponse = await response.json()
@@ -129,19 +130,62 @@ export class USDAProvider implements NutritionProvider {
       potassium: null,
     }
 
+    // Map of nutrient ID to value for quick lookup
+    const nutrientMap = new Map<number, number>()
     for (const nutrient of nutrients) {
-      const key = USDA_NUTRIENT_ID_TO_KEY[nutrient.nutrientId]
+      // Handle both flat and nested structures
+      const id = nutrient.nutrientId ?? nutrient.nutrient?.id
+      const val = nutrient.value ?? nutrient.amount
+
+      if (id && typeof val === 'number') {
+        nutrientMap.set(id, val)
+      }
+    }
+
+    // 1. Try standard mappings first
+    for (const nutrient of nutrients) {
+      const id = nutrient.nutrientId ?? nutrient.nutrient?.id
+      if (!id) continue
+
+      const key = USDA_NUTRIENT_ID_TO_KEY[id]
       if (key && key in result) {
-        // Convert units if needed
-        let value = nutrient.value
+        // USDA API returns 'value' for Foundation foods but 'amount' for Branded foods
+        const val = nutrient.value ?? nutrient.amount
 
-        // USDA reports some nutrients in different units
-        // Vitamin D is in IU or mcg depending on data type
-        // Cholesterol is in mg
-        // Most macros are in g
+        if (typeof val === 'number') {
+          result[key] = val
+        }
+      }
+    }
 
-        // Store the value (already per 100g from USDA)
-        result[key] = value
+    // 2. Check fallbacks for missing values
+    // USDA often uses different IDs for the same nutrient based on source (survey vs label vs legacy)
+    const FALLBACK_NUTRIENT_IDS: Partial<Record<keyof NutrientsPer100g, number[]>> = {
+      calories: [
+        2047, // Energy (Atwater Specific Factors)
+        2048, // Energy (Atwater General Factors)
+      ],
+      totalCarbohydrate: [
+        1005, // Carbohydrate, by difference is standard (1005), but sometimes...
+        // Add more if identified. Currently 1005 is the main one.
+      ],
+      // Add other fallbacks as discovered necessary
+    }
+
+    for (const [key, fallbacks] of Object.entries(FALLBACK_NUTRIENT_IDS)) {
+      const nutrientKey = key as keyof NutrientsPer100g
+      if (result[nutrientKey] === null || result[nutrientKey] === 0) {
+        for (const fallbackId of fallbacks) {
+          if (nutrientMap.has(fallbackId)) {
+            const value = nutrientMap.get(fallbackId)
+            // Only use if valid value (some might be 0 which we might accept as 0, or prefer a non-zero if multiple exist)
+            // But usually the first valid one we find is better than nothing.
+            if (value !== undefined && value !== null) {
+              result[nutrientKey] = value
+              break // Found a value, stop looking for this nutrient
+            }
+          }
+        }
       }
     }
 

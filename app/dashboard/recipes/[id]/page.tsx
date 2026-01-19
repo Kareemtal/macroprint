@@ -103,18 +103,36 @@ export default function RecipePage({ params }: { params: { id: string } }) {
                                     <div className="space-y-2">
                                         <div className="flex justify-between border-b pb-2">
                                             <span className="text-muted-foreground">Protein</span>
-                                            <span className="font-medium">{recipe.computed.perServing.protein?.toFixed(1)}g</span>
+                                            <div className="text-right">
+                                                <span className="font-medium">{recipe.computed.perServing.protein?.toFixed(1)}g</span>
+                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                    {Math.round(((recipe.computed.perServing.protein ?? 0) / 50) * 100)}% DV
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="flex justify-between border-b pb-2">
                                             <span className="text-muted-foreground">Carbs</span>
-                                            <span className="font-medium">{recipe.computed.perServing.totalCarbohydrate?.toFixed(1)}g</span>
+                                            <div className="text-right">
+                                                <span className="font-medium">{recipe.computed.perServing.totalCarbohydrate?.toFixed(1)}g</span>
+                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                    {Math.round(((recipe.computed.perServing.totalCarbohydrate ?? 0) / 275) * 100)}% DV
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="flex justify-between border-b pb-2">
                                             <span className="text-muted-foreground">Fat</span>
-                                            <span className="font-medium">{recipe.computed.perServing.totalFat?.toFixed(1)}g</span>
+                                            <div className="text-right">
+                                                <span className="font-medium">{recipe.computed.perServing.totalFat?.toFixed(1)}g</span>
+                                                <span className="ml-2 text-xs text-muted-foreground">
+                                                    {Math.round(((recipe.computed.perServing.totalFat ?? 0) / 78) * 100)}% DV
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                <p className="text-xs text-muted-foreground text-center">
+                                    * The % Daily Value (DV) tells you how much a nutrient in a serving contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.
+                                </p>
                             </div>
                         ) : (
                             <div className="py-4 text-center text-muted-foreground">

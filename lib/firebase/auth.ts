@@ -65,10 +65,11 @@ export async function ensureUserProfile(user: User): Promise<UserProfile> {
       businessProfile: null,
       exportCountToday: 0,
       lastExportDate: null,
+      bonusExports: 0,
     }
 
     await setDoc(userRef, newProfile)
-    
+
     return {
       ...newProfile,
       createdAt: new Date(),

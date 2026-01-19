@@ -40,25 +40,25 @@ interface LabelPreviewProps {
 }
 
 export function LabelPreview({ data, preset, showWatermark = false }: LabelPreviewProps) {
-  const presetSizes: Record<LabelFormatPreset, { width: string; height: string }> = {
-    '2x4': { width: '150px', height: '300px' },
-    '3x4': { width: '200px', height: '267px' },
-    '4x6': { width: '250px', height: '375px' },
-    '8.5x11': { width: '300px', height: '388px' },
+  const presetWidths: Record<LabelFormatPreset, string> = {
+    '2x4': '150px',
+    '3x4': '200px',
+    '4x6': '250px',
+    '8.5x11': '300px',
   }
 
-  const size = presetSizes[preset]
+  const width = presetWidths[preset]
 
   return (
     <div
-      className="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
-      style={{ width: size.width, height: size.height }}
+      className="rounded-lg border border-neutral-200 bg-white shadow-sm"
+      style={{ width }}
     >
       <NutritionLabel
         data={data}
         preset={preset}
         showWatermark={showWatermark}
-        className="h-full w-full"
+        className="w-full"
       />
     </div>
   )

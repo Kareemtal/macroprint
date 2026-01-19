@@ -6,12 +6,12 @@ import type { FoodSearchResult, FoodDetail } from '@/lib/types'
  */
 export interface NutritionProvider {
   name: string
-  
+
   /**
    * Search for foods by query string
    */
   searchFoods(query: string, options?: SearchOptions): Promise<FoodSearchResult[]>
-  
+
   /**
    * Get detailed food information by ID
    */
@@ -47,11 +47,18 @@ export interface USDAFoodItem {
 }
 
 export interface USDAFoodNutrient {
-  nutrientId: number
-  nutrientName: string
-  nutrientNumber: string
-  unitName: string
-  value: number
+  nutrientId?: number
+  nutrientName?: string
+  nutrientNumber?: string
+  unitName?: string
+  value?: number
+  amount?: number
+  nutrient?: {
+    id: number
+    name: string
+    number: string
+    unitName: string
+  }
   derivationCode?: string
   derivationDescription?: string
 }

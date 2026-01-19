@@ -7,9 +7,226 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { getInitials } from '@/lib/utils'
+import { useState, useEffect, useCallback } from 'react'
+import { auth } from '@/lib/firebase/config'
+
+interface AdminUser {
+    uid: string
+    email: string
+    displayName: string | null
+    plan: string
+    createdAt: string | null
+    exportCountToday: number
+    bonusExports: number
+    isAdmin: boolean
+}
+
+function AdminUserManagement() {
+    const [users, setUsers] = useState<AdminUser[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [grantingCredits, setGrantingCredits] = useState<string | null>(null)
+    const [creditInputs, setCreditInputs] = useState<Record<string, string>>({})
+
+    const fetchUsers = useCallback(async () => {
+        try {
+            setLoading(true)
+            setError(null)
+
+            const token = await auth.currentUser?.getIdToken()
+            if (!token) {
+                setError('Not authenticated')
+                return
+            }
+
+            const response = await fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            })
+
+            if (!response.ok) {
+                const data = await response.json()
+                throw new Error(data.error || 'Failed to fetch users')
+            }
+
+            const data = await response.json()
+            setUsers(data.users)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to fetch users')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        fetchUsers()
+    }, [fetchUsers])
+
+    const handleGrantCredits = async (targetUid: string) => {
+        const credits = parseInt(creditInputs[targetUid] || '0', 10)
+        if (credits <= 0) {
+            alert('Please enter a positive number of credits')
+            return
+        }
+
+        try {
+            setGrantingCredits(targetUid)
+            const token = await auth.currentUser?.getIdToken()
+
+            const response = await fetch('/api/admin/grant-credits', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ targetUid, credits }),
+            })
+
+            if (!response.ok) {
+                const data = await response.json()
+                throw new Error(data.error || 'Failed to grant credits')
+            }
+
+            // Clear input and refresh users
+            setCreditInputs(prev => ({ ...prev, [targetUid]: '' }))
+            await fetchUsers()
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to grant credits')
+        } finally {
+            setGrantingCredits(null)
+        }
+    }
+
+    const formatDate = (dateStr: string | null) => {
+        if (!dateStr) return 'N/A'
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        })
+    }
+
+    if (loading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>👑 User Management</CardTitle>
+                    <CardDescription>Loading users...</CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
+
+    if (error) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>👑 User Management</CardTitle>
+                    <CardDescription className="text-red-500">{error}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={fetchUsers} variant="outline">Retry</Button>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>👑 User Management</CardTitle>
+                <CardDescription>
+                    View all registered users and manage their export credits.
+                    <span className="ml-2 font-semibold">Total users: {users.length}</span>
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b">
+                                <th className="text-left py-3 px-2 font-medium">Email</th>
+                                <th className="text-left py-3 px-2 font-medium">Plan</th>
+                                <th className="text-left py-3 px-2 font-medium">Signed Up</th>
+                                <th className="text-center py-3 px-2 font-medium">Exports Today</th>
+                                <th className="text-center py-3 px-2 font-medium">Bonus Credits</th>
+                                <th className="text-left py-3 px-2 font-medium">Grant Credits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map(user => (
+                                <tr key={user.uid} className="border-b hover:bg-muted/50">
+                                    <td className="py-3 px-2">
+                                        <div className="flex items-center gap-2">
+                                            {user.email}
+                                            {user.isAdmin && (
+                                                <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded">
+                                                    Admin
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="py-3 px-2">
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${user.plan === 'PRO' ? 'bg-purple-100 text-purple-800' :
+                                                user.plan === 'BASIC' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {user.plan}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-2 text-muted-foreground">
+                                        {formatDate(user.createdAt)}
+                                    </td>
+                                    <td className="py-3 px-2 text-center">
+                                        {user.exportCountToday}
+                                    </td>
+                                    <td className="py-3 px-2 text-center">
+                                        <span className={user.bonusExports > 0 ? 'text-green-600 font-medium' : ''}>
+                                            {user.bonusExports}
+                                        </span>
+                                    </td>
+                                    <td className="py-3 px-2">
+                                        <div className="flex items-center gap-2">
+                                            <Input
+                                                type="number"
+                                                min="1"
+                                                placeholder="0"
+                                                className="w-20 h-8"
+                                                value={creditInputs[user.uid] || ''}
+                                                onChange={(e) => setCreditInputs(prev => ({
+                                                    ...prev,
+                                                    [user.uid]: e.target.value
+                                                }))}
+                                            />
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => handleGrantCredits(user.uid)}
+                                                disabled={grantingCredits === user.uid}
+                                            >
+                                                {grantingCredits === user.uid ? '...' : 'Grant'}
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="mt-4 flex justify-end">
+                    <Button onClick={fetchUsers} variant="outline" size="sm">
+                        Refresh List
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function SettingsPage() {
     const { user, profile } = useAuth()
+    const isAdmin = profile?.isAdmin === true
 
     return (
         <div className="space-y-6">
@@ -19,6 +236,9 @@ export default function SettingsPage() {
                     Manage your account settings and preferences.
                 </p>
             </div>
+
+            {/* Admin User Management - Only visible to admins */}
+            {isAdmin && <AdminUserManagement />}
 
             <Card>
                 <CardHeader>
