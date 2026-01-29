@@ -33,10 +33,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Lazy import to avoid build-time initialization
-    const { stripe, STRIPE_PRICES } = await import('@/lib/stripe/config')
+    const { stripe, STRIPE_PRODUCTS } = await import('@/lib/stripe/config')
+    const { PLAN_FEATURES } = await import('@/lib/stripe/plans')
     const db = getAdminDb()
 
-    console.log('[Checkout] Stripe prices:', STRIPE_PRICES)
+    console.log('[Checkout] Stripe products:', STRIPE_PRODUCTS)
 
     const { plan, userId } = await request.json()
     console.log('[Checkout] Request:', { plan, userId })
@@ -83,18 +84,20 @@ export async function POST(request: NextRequest) {
       await userRef.update({ stripeCustomerId: customerId })
     }
 
-    const priceId = plan === 'BASIC' ? STRIPE_PRICES.BASIC : STRIPE_PRICES.PRO
-    console.log('[Checkout] Using price ID:', priceId)
+    const productId = plan === 'BASIC' ? STRIPE_PRODUCTS.BASIC : STRIPE_PRODUCTS.PRO
+    const planFeatures = PLAN_FEATURES[plan as keyof typeof PLAN_FEATURES]
+    const priceInCents = planFeatures.price * 100 // Convert dollars to cents
+    console.log('[Checkout] Using product ID:', productId, 'Price:', priceInCents)
 
-    if (!priceId) {
-      console.error('[Checkout] Price ID not set for plan:', plan)
+    if (!productId) {
+      console.error('[Checkout] Product ID not set for plan:', plan)
       return NextResponse.json(
         { error: 'Pricing not configured. Please contact support.' },
         { status: 500 }
       )
     }
 
-    // Create checkout session
+    // Create checkout session with price_data (allows using product IDs)
     console.log('[Checkout] Creating checkout session...')
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -102,7 +105,14 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: priceId,
+          price_data: {
+            currency: 'usd',
+            product: productId,
+            recurring: {
+              interval: 'month',
+            },
+            unit_amount: priceInCents,
+          },
           quantity: 1,
         },
       ],

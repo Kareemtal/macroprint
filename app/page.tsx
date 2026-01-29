@@ -53,10 +53,7 @@ export default function HomePage() {
       <section className="hero-pattern relative overflow-hidden py-20 md:py-32">
         <div className="container relative">
           <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-yellow-200 bg-yellow-50 px-4 py-1.5 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="font-semibold">Coming Soon:</span> The app is not ready yet
-            </div>
+
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-muted/50 px-4 py-1.5 text-sm">
               <ChefHat className="h-4 w-4 text-primary" />
               <span>Built for meal prep professionals</span>

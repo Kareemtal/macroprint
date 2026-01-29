@@ -9,7 +9,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   typescript: true,
 })
 
-export const STRIPE_PRICES = {
-  BASIC: process.env.STRIPE_BASIC_PRICE_ID || 'prod_TspSsYEIQwDGgm',
-  PRO: process.env.STRIPE_PRO_PRICE_ID || 'prod_TspT18qriF0uLP',
+export const STRIPE_PRODUCTS = {
+  BASIC: process.env.STRIPE_BASIC_PRODUCT_ID || 'prod_TspSsYEIQwDGgm',
+  PRO: process.env.STRIPE_PRO_PRODUCT_ID || 'prod_TspT18qriF0uLP',
 }
