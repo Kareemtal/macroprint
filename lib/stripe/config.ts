@@ -10,6 +10,6 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 })
 
 export const STRIPE_PRICES = {
-  BASIC: process.env.STRIPE_BASIC_PRICE_ID || '',
-  PRO: process.env.STRIPE_PRO_PRICE_ID || '',
+  BASIC: process.env.STRIPE_BASIC_PRICE_ID || 'prod_TspSsYEIQwDGgm',
+  PRO: process.env.STRIPE_PRO_PRICE_ID || 'prod_TspT18qriF0uLP',
 }

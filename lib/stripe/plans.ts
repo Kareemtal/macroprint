@@ -16,7 +16,7 @@ export const PLAN_FEATURES = {
   },
   BASIC: {
     name: 'Basic',
-    price: 29,
+    price: 5,
     recipes: 50,
     exportsPerDay: 50,
     features: [
@@ -31,7 +31,7 @@ export const PLAN_FEATURES = {
   },
   PRO: {
     name: 'Pro',
-    price: 99,
+    price: 15,
     recipes: 'Unlimited',
     exportsPerDay: 'Unlimited',
     features: [
